@@ -14,6 +14,6 @@ class EventFactory(Process):
     def run(self):
         while True:
             event = Event()
-            event.event = self.id
+            event.event = self._id
             self._queue.put(event)
             time.sleep(random.expovariate(1))
