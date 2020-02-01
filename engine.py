@@ -17,6 +17,7 @@ class Event:
         mark entry as invalid so our engine ignores it 
         ''' 
         return self._valid; 
+
     def invalidate(self): 
         self._valid = False 
     
@@ -46,6 +47,7 @@ class Engine:
 
     def tick(self): 
         # pop from heapq 
+        # TODO: Add start/stop functionality 
         priority, event = heapq.heappop(self._queue)
         
         while not event.isValid(): 
