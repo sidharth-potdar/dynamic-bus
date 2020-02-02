@@ -15,7 +15,7 @@ class Scheduler:
         Given a variable number of ride request events, handle them according to current state
         '''
         for event in events:
-            self.assign_ride(event.source_node, 1)
+            self.assign_ride((event.id, event.origin_node, event.destination_node, event.priority))
 
     def find_nearest_bus(self, request_node):
         '''
