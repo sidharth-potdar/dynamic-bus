@@ -3,7 +3,6 @@ import random
 import time
 
 from engine import Engine
-from event import Event
 from event_factory import EventFactory
 
 def main():

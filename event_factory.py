@@ -2,7 +2,7 @@ from multiprocessing import Process
 import time
 import random
 
-from event import Event
+from events import Event
 
 class EventFactory(Process):
     def __init__(self, queue, id, distribution=None):
