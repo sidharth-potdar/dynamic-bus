@@ -31,7 +31,7 @@ class Scheduler:
         min_distance = float("inf")
         min_bus = None
         for node_id, bus_id in bus_locations.items():
-            distance, _ = Graph.find_shortest_path(node_id, request_node)
+            distance, _ = graph.find_shortest_path(node_id, request_node)
             if distance < min_distance:
                 min_distance = distance
                 min_bus = bus_id
@@ -44,7 +44,7 @@ class Scheduler:
         Given a ride request (ride_id, origin_node_id, destination_node_id, priority), assign it to a bus according to scheduler's policy
         '''
         ride_id, origin_node, destination_node, priority = ride_request
-        nearest_bus = find_nearest_bus(request_node)
+        nearest_bus = self.find_nearest_bus(request_node)
 
         # if there is an available bus, add new ride to bus route and load
         if nearest_bus is not None:
