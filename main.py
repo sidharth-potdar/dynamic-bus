@@ -3,13 +3,13 @@ import random
 import time
 
 from engine import Engine
-from event_factory import EventFactory
+from event_processes import EventProcess
 
 def main():
     engine = Engine()
     queue = mp.Queue()
 
-    processes = [EventFactory(queue, i) for i in range(2)]
+    processes = [EventProcess(queue, i) for i in range(2)]
 
     for p in processes:
         p.start()

@@ -1,6 +1,6 @@
-from event_process import EventProcess
+from .event_process import EventProcess
 
-class RideRequestEventProcess(Process):
+class RideRequestEventProcess(EventProcess):
     def __init__(self, queue, id, distribution=None):
         super(RideRequestEventProcess, self).__init__()
 

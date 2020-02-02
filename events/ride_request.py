@@ -1,5 +1,5 @@
 from .event import Event
-from ..scheduler import Scheduler
+from scheduler import Scheduler
 
 class RideRequestEvent(Event):
     def __init__(self):
