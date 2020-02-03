@@ -7,7 +7,7 @@ import itertools
 class Graph:
     _graph = None 
     @classmethod 
-    def init_random(cls, N = 100, p = 0.1, max_weight = 100):
+    def init_random(cls, N = 100, p = 0.02, max_weight = 100):
         ''' 
         Initialize a random graph with no planarity 
         ''' 
@@ -89,24 +89,26 @@ class Graph:
         # while openset evaluates to T as long as openset is not empty
         while openset and not found: 
             f, node, origin = heapq.heappop(openset)
+
             if node in closedset: 
                 continue # we already encountered it 
             path[node] = origin
+            if node is end: 
+                found = True 
+                break 
             # generate successors 
             edges = cls.get_neighbors(node) 
             # add to open set 
             for e in edges: 
                 # don't go to nodes we hvae already visited
-                if e[0] is end: 
-                    found = True 
-                    path[end] = node
-                    break 
                 if e[0] in closedset: 
                     continue 
                 f_score = e[-1] + cls.dist(e[0], end) 
                 heapq.heappush(openset, (f_score, e[0], node))
             closedset.add(node) 
         c = end 
+        if found == False: 
+            return (-1, None)
         while c is not None: 
             final_path.append(c) 
             c = path[c]
@@ -117,7 +119,26 @@ class Graph:
 
 
 if __name__ == "__main__": 
+    import sys
+    import pickle 
     g = Graph() 
     g.init_random()
-    dist, path = g.find_shortest_path(1, 10) 
-    print(dist, path) 
+    # verify good graph 
+    nodes = g.get_nodes() 
+    dumped = False 
+    random_int = random.randint(0, 10000000)
+    for i in range(len(nodes)): 
+        for j in range(len(nodes)): 
+            if i != j: 
+                n1 = nodes[i]
+                n2 = nodes[j]
+                try: 
+                    dist, path = g.find_shortest_path(n1, n2) 
+                    print(n1, n2, dist, path) 
+                except:
+                    print(n1, n2, random_int, file=sys.stderr)
+                    if not dumped: 
+                        with open("graph_" + str(random_int) + ".pickle", 'wb') as f: 
+                            pickle.dump(g._graph, f)
+                        dumped = True 
+                    raise 
