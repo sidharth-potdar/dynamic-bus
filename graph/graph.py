@@ -27,6 +27,22 @@ class Graph:
         # zip location, edges
         node_addr = list(zip(map(tuple, locations), edges))
         cls._graph = dict(zip(nodes, node_addr))
+
+        # verify every node is reachable. 
+        checked_set = set() 
+        all_nodes = set(cls._graph.keys())
+        for key, value in cls._graph.items(): 
+            for edge in value[-1]: 
+                checked_set.add(edge[0]) # add all visited nodes to the checked_set 
+        difference_set = all_nodes.difference(checked_set)
+        if len(difference_set) != 0: 
+            for node in difference_set: 
+                next_node = (node + 1) % N 
+                entry = cls._graph[next_node]
+                edge_list = list(entry[-1])
+                edge_list.append((node, 1))
+                new_entry = [entry[0], edge_list]
+                cls._graph[next_node] = new_entry 
   
     @classmethod
     def get_nodes(cls): 
