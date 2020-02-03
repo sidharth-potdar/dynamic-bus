@@ -7,11 +7,11 @@ import itertools
 class Graph:
     _graph = None 
     @classmethod 
-    def init_random(cls, N = 100, p = 0.02, max_weight = 100):
+    def init_random(cls, N = 100, p = 0.1, max_weight = 100):
         ''' 
         Initialize a random graph with no planarity 
         ''' 
-        nodes = tuple(range(100))
+        nodes = tuple(range(N))
         weights = list((1 + i for i in range(max_weight)))
         edges = [] 
         ones = [1] * N 
@@ -89,10 +89,11 @@ class Graph:
         # while openset evaluates to T as long as openset is not empty
         while openset and not found: 
             f, node, origin = heapq.heappop(openset)
-
             if node in closedset: 
                 continue # we already encountered it 
+            
             path[node] = origin
+
             if node is end: 
                 found = True 
                 break 
@@ -122,7 +123,7 @@ if __name__ == "__main__":
     import sys
     import pickle 
     g = Graph() 
-    g.init_random()
+    g.init_random(N=100, p=0.01)
     # verify good graph 
     nodes = g.get_nodes() 
     dumped = False 
