@@ -1,8 +1,8 @@
 from .event_process import EventProcess
 
-class RideRequestEventProcess(EventProcess):
+class RequestEventProcess(EventProcess):
     def __init__(self, queue, id, distribution=None):
-        super(RideRequestEventProcess, self).__init__()
+        super(RequestEventProcess, self).__init__()
 
     def run(self):
         '''

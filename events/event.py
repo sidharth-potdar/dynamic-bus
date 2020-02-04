@@ -8,7 +8,7 @@ class Event:
     def __init__(self, ts=None, *args, **kwargs):
         self._scheduled_ts = time.time()
         self._valid = True
-        self._execute_at = time.time()
+        self._execute_at = ts
         # self._id = next(Event.__counter)
         self._id = uuid4()
         self.event = None
@@ -33,5 +33,4 @@ class Event:
         ''' enter code to do here upon execution
         - generate new events, etc
         '''
-        print(self._id, self.event)
         pass
