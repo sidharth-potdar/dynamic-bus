@@ -1,4 +1,6 @@
 from event import Event
+from scheduler import Scheduler
+
 class ScheduleEvent(Event):
 
     def __init__(self, rider, bus, ts=None, *args, **kwargs):
