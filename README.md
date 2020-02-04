@@ -1,11 +1,11 @@
 # CX4230
 
-## Structure 
+## Installation 
 
-Have one process (Engine) that is constantly running and executing events, and managing the queue. Have a second 
-process (Simulation) that generates events from distributions and sends them to the Engine. We can send them over in batch. 
+Clone the repository. Everything required is included. 
 
-Maybe another process for long-running event logic 
+## running 
+``` python3 main.py``` 
+It MUST be run with Python3, it is not Python2 compatible. 
 
-shared dictionary, simulation process can monitor shared dict to generate more events 
 
