@@ -6,4 +6,5 @@ class RideRequestEvent(Event):
 
 
     def execute(self):
+        Scheduler.getInstance().register(self)
         print(self.rider)

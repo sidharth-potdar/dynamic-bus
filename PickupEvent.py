@@ -7,5 +7,6 @@ class PickupEvent(Event):
 
 
     def execute(self):
+        Scheduler.getInstance().register(self)
         self.bus.addRider()
         print(self.rider)

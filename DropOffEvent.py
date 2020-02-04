@@ -1,4 +1,5 @@
 from event import Event
+from scheduler import Scheduler
 
 class DropOffEvent(Event):
 
@@ -8,5 +9,6 @@ class DropOffEvent(Event):
 
 
     def execute(self):
+        Scheduler.getInstance().register(self)
         self.bus.deleteRider()
         print(self.rider)

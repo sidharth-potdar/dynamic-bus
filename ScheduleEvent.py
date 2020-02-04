@@ -9,4 +9,4 @@ class ScheduleEvent(Event):
 
 
     def execute(self):
-        pass
+        Scheduler.getInstance().register(self)
