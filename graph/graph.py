@@ -1,6 +1,5 @@
 import random
 import math
-import numpy.random as nrand
 import heapq
 import itertools
 
@@ -23,7 +22,10 @@ class Graph:
             new_dag_edges = tuple(zip(new_edges, new_edge_weights))
             edges.append(new_dag_edges)
         # generate random locations
-        locations = nrand.rand(N, 2)
+        locations = [] 
+        for i in range(N): 
+            locations.append([random.random(), random.random()])
+
         # zip location, edges
         node_addr = list(zip(map(tuple, locations), edges))
         cls._graph = dict(zip(nodes, node_addr))
