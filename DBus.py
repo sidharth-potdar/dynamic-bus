@@ -1,4 +1,3 @@
-
 class DBus:
 
     def __init__(self, startTAZ, capacity = 6, *args, **kwargs):
@@ -8,6 +7,7 @@ class DBus:
         # load refers to the number of people currently in the bus
         self.capacity = capacity
         self.load = 0
+        self.next = None
 
 
     def addRider(self):
@@ -33,3 +33,6 @@ class DBus:
 
     def isEmpty(self):
         return self.load == 0
+
+    def setNext(self, nextDest):
+        self.next = nextDest
