@@ -170,49 +170,49 @@ class Graph:
             total_distance = cls.compute_distance(final_path)
             return (total_distance, final_path)
         
-        def update_event(cls, requsted_time): 
-            ''' not ready''' 
-            local_copy = deepcopy(cls._graph) 
-            
-            interpolate_req = False 
-            interp_weight_1 = 1 
-            interp_weight_2 = 0
-            start = 0 
-            end = 0
-            if requsted_time != int(requsted_time): 
-                interpolate_req = True 
-            else: 
-                start = math.floor(requsted_time)
-                end = math.ceil(requsted_time)
-                interp_weight_1 = requsted_time - start 
-                interp_weight_2 = 1 - interp_weight_1
-            for node in local_copy.keys(): 
-                node_entry = local_copy[node] 
-                edge_entry = node_entry[-1]
-                new_edges = deque()
-                edge_dist = None
-                for neighbor, weight in edge_entry: 
-                    # grab distribution 
-                    if not interpolate_req: 
-                        edge_dist = cls._dist[(node, neighbor)][requsted_time]
-                    else: 
-                        edge_dist_1 = cls._dist[(node, neighbor)][start]
-                        edge_dist_2 = cls._dist[(node, neighbor)][end] 
-                        wa_mean = interp_weight_1 * edge_dist_1['mean'] + interp_weight_2 * edge_dist_2['mean']
-                        wa_std  = (interp_weight_1 ** 2) * (edge_dist_1['stdev'] ** 2)  + (interp_weight_2**2)  * (edge_dist_2['stdev'] ** 2)
-                        wa_gmean = interp_weight_1 * edge_dist_1['gmean'] + interp_weight_2 * edge_dist_2['gmean']
-                        wa_gstdev = (interp_weight_1 ** 2) * (edge_dist_1['gstdev']**2) + (interp_weight_2 ** 2) * (edge_dist_2['gmean'] ** 2)
-                        edge_dist = {
-                            "mean": wa_mean, 
-                            "stdev": wa_std, 
-                            "gmean": wa_gmean, 
-                            "gstdev": wa_gstdev
-                        }
-                    # draw from distribution 
-                    new_weight = random.lognormal(mean=edge_dist['gmean'], sigma=edge_dist['gstdev']) 
-                    new_edges.append((neighbor, new_weight))
-            with cls._lock: 
-                cls._graph = local_copy
+    def update_event(cls, requsted_time): 
+        ''' currently synchronous ''' 
+        local_copy = deepcopy(cls._graph) 
+        interpolate_req = False 
+        interp_weight_1 = 1 
+        interp_weight_2 = 0
+        start = 0 
+        end = 0
+        if requsted_time != int(requsted_time): 
+            interpolate_req = True 
+        else: 
+            start = math.floor(requsted_time)
+            end = math.ceil(requsted_time)
+            interp_weight_1 = requsted_time - start 
+            interp_weight_2 = 1 - interp_weight_1
+        for node in local_copy.keys(): 
+            node_entry = local_copy[node] 
+            edge_entry = node_entry[-1]
+            new_edges = []
+            edge_dist = None
+            for neighbor, weight in edge_entry: 
+                # grab distribution 
+                if not interpolate_req: 
+                    edge_dist = cls._dist[(node, neighbor)][requsted_time]
+                else: 
+                    edge_dist_1 = cls._dist[(node, neighbor)][start]
+                    edge_dist_2 = cls._dist[(node, neighbor)][end] 
+                    wa_mean = interp_weight_1 * edge_dist_1['mean'] + interp_weight_2 * edge_dist_2['mean']
+                    wa_std  = (interp_weight_1 ** 2) * (edge_dist_1['stdev'] ** 2)  + (interp_weight_2**2)  * (edge_dist_2['stdev'] ** 2)
+                    wa_gmean = interp_weight_1 * edge_dist_1['gmean'] + interp_weight_2 * edge_dist_2['gmean']
+                    wa_gstdev = (interp_weight_1 ** 2) * (edge_dist_1['gstdev']**2) + (interp_weight_2 ** 2) * (edge_dist_2['gmean'] ** 2)
+                    edge_dist = {
+                        "mean": wa_mean, 
+                        "stdev": wa_std, 
+                        "gmean": wa_gmean, 
+                        "gstdev": wa_gstdev
+                    }
+                # draw from distribution 
+                new_weight = random.normal(edge_dist['gmean'], edge_dist['gstdev']) 
+                new_edges.append((neighbor, new_weight))
+            local_copy[node] = (node_entry[0], tuple(new_edges))
+        with cls._lock: 
+            cls._graph = local_copy
 
 
 
