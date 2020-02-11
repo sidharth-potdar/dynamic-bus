@@ -5,8 +5,10 @@ from scheduler import Scheduler
 import time
 
 class RequestEvent(Event):
-    def __init__(self, origin_node, destination_node, priority=1):
-        super(RequestEvent, self).__init__(time.time())
+    def __init__(self, origin_node, destination_node, ts=None, current_ts=None,priority=1):
+        super(RequestEvent, self).__init__(ts=ts, current_ts=current_ts)
+        self.ts = ts
+        self.current_ts = current_ts
         self.origin_node = origin_node
         self.destination_node = destination_node
 
@@ -18,8 +20,9 @@ class RequestEvent(Event):
         Scheduler.request_ride(self._id)
         nearest_bus = Scheduler.find_nearest_bus(self.origin_node)
         if nearest_bus is not None:
-            schedule_event = ScheduleEvent(ts=time.time(), ride_id=self._id, bus_id=nearest_bus, origin_node=self.origin_node, destination_node=self.destination_node)
+            schedule_event = ScheduleEvent(ts=self.ts + 5, current_ts=self.ts, ride_id=self._id, bus_id=nearest_bus, origin_node=self.origin_node, destination_node=self.destination_node)
             Scheduler.pass_events(schedule_event)
         else:
             # TODO: logic for passing event back to engine
+            # Reschedule event for a later time?
             pass

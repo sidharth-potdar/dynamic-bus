@@ -4,8 +4,8 @@ from .dropoff_event import DropoffEvent
 from scheduler import Scheduler
 
 class ScheduleEvent(Event):
-    def __init__(self, ts, ride_id, bus_id, origin_node, destination_node, priority=1):
-        super(ScheduleEvent, self).__init__(ts)
+    def __init__(self, ts, current_ts, ride_id, bus_id, origin_node, destination_node, priority=1):
+        super(ScheduleEvent, self).__init__(ts, current_ts)
         self.ride_id = ride_id
         self.bus_id = bus_id
         self.origin_node = origin_node

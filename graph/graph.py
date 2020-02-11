@@ -6,7 +6,7 @@ import itertools
 class Graph:
     _graph = None
     @classmethod
-    def init_random(cls, N = 100, p = 0.1, max_weight = 100):
+    def init_random(cls, N = 981, p = 0.1, max_weight = 100):
         '''
         Initialize a random graph with no planarity
         '''

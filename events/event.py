@@ -5,8 +5,8 @@ import time
 class Event:
     # __counter = itertools.count()
 
-    def __init__(self, ts=None, *args, **kwargs):
-        self._scheduled_ts = time.time()
+    def __init__(self, ts=None, current_ts=None, *args, **kwargs):
+        self._scheduled_ts = current_ts
         self._valid = True
         self._execute_at = ts
         # self._id = next(Event.__counter)
@@ -18,7 +18,7 @@ class Event:
         Instead of having to remove from the priority queue,
         mark entry as invalid so our engine ignores it
         '''
-        return self._valid;
+        return self._valid
     def invalidate(self):
         self._valid = False
 
