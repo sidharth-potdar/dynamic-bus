@@ -9,8 +9,11 @@ import pickle
 class Graph:
     _graph = None
     _dist = None 
+    _heuristic = None 
     _lock = None
     _lock_init = False
+    heuristic = Graph.mdist 
+    
     @classmethod 
     def init(cls): 
         if not cls._lock_init: 
@@ -23,6 +26,19 @@ class Graph:
             graph_dict, dist_dict = pickle.load(f) 
         cls._graph = graph_dict
         cls._dist = dist_dict
+        # build total heuristic 
+        cls._precompute_heuristic() 
+   
+    @classmethod 
+    def _precompute_heuristic(cls): 
+        cls._heuristic = {} 
+        all_nodes = cls.get_nodes() 
+        for i in range(len(all_nodes)): 
+            for j in range(i, len(all_nodes)): 
+                d = cls.heuristic(all_nodes[i], all_nodes[j])
+                cls._heuristic[(all_nodes[i], all_nodes[j])] = d
+                cls._heuristic[(all_nodes[j], all_nodes[i])] = d
+                
     @classmethod
     def init_random(cls, N = 100, p = 0.1, max_weight = 100):
         '''
@@ -63,7 +79,7 @@ class Graph:
                 edge_list.append((node, 1))
                 new_entry = [entry[0], edge_list]
                 cls._graph[next_node] = new_entry
-
+        cls._precompute_heuristic() 
     
     @classmethod
     def get_nodes(cls):
@@ -77,7 +93,12 @@ class Graph:
     def dist(cls, N1,N2):
         x1, y1 = cls._graph[N1][0]
         x2, y2 = cls._graph[N2][0]
-        return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+        return ((x1 - x2)**2 + (y1 - y2)**2)**(0.5)
+    @classmethod 
+    def mdist(cls, N1, N2): 
+        x1, y1 = cls._graph[N1][0]
+        x2, y2 = cls._graph[N2][0]
+        return abs(x1-x2) + abs(y1-y2)
 
     @classmethod
     def compute_distance(cls, path):
@@ -105,12 +126,14 @@ class Graph:
         # because min-heap, we will only infrequently encounter
         # the case when we reencounter a node
         # but we can check against closed set for that.
-        heapq.heappush(openset, (0, start, None))
+        push = heapq.heappush 
+        pop = heapq.heappop 
+        push(openset, (0, start, None))
         final_path = []
         found = False
         # while openset evaluates to T as long as openset is not empty
         while openset and not found:
-            f, node, origin = heapq.heappop(openset)
+            f, node, origin = pop(openset)
 
             path[node] = origin
 
@@ -128,8 +151,8 @@ class Graph:
                 # don't go to nodes we hvae already visited
                 if e[0] in closedset:
                     continue
-                f_score = e[-1] + cls.dist(e[0], end)
-                heapq.heappush(openset, (f_score, e[0], node))
+                f_score = e[-1] + cls._heuristic[(e[0], end)]
+                push(openset, (f_score, e[0], node))
             closedset.add(node)
         c = end
         if found == False:
@@ -147,6 +170,8 @@ class Graph:
          
         with cls._lock: 
             cls._graph = local_copy
+
+
 
 if __name__ == "__main__":
     import sys
