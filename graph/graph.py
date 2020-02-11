@@ -4,9 +4,11 @@ import heapq
 import itertools
 from copy import deepcopy
 from threading import Lock
+import pickle 
 
 class Graph:
     _graph = None
+    _dist = None 
     _lock = None
     _lock_init = False
     @classmethod 
@@ -14,7 +16,13 @@ class Graph:
         if not cls._lock_init: 
             cls._lock = Lock() 
             cls._lock_init = True 
-
+    @classmethod
+    def init_file(cls, file_string): 
+        cls.init() 
+        with open(file_string, 'rb') as f: 
+            graph_dict, dist_dict = pickle.load(f) 
+        cls._graph = graph_dict
+        cls._dist = dist_dict
     @classmethod
     def init_random(cls, N = 100, p = 0.1, max_weight = 100):
         '''
@@ -86,52 +94,54 @@ class Graph:
     
     @classmethod
     def find_shortest_path(cls, start, end):
-        with cls._lock: 
-            # we're doing to do a* for now
-            openset = []
-            # save node, origin pairs
-            path = dict()
-            closedset = set()
-            # openset contains f-score = weight + heuristic
-            # closed set only contains node
-            # we can just re-add to heap when node is encountered again
-            # because min-heap, we will only infrequently encounter
-            # the case when we reencounter a node
-            # but we can check against closed set for that.
-            heapq.heappush(openset, (0, start, None))
-            final_path = []
-            found = False
-            # while openset evaluates to T as long as openset is not empty
-            while openset and not found:
-                f, node, origin = heapq.heappop(openset)
-                if node in closedset:
-                    continue # we already encountered it
+        # we're doing to do a* for now
+        openset = []
+        # save node, origin pairs
+        path = dict()
+        closedset = set()
+        # openset contains f-score = weight + heuristic
+        # closed set only contains node
+        # we can just re-add to heap when node is encountered again
+        # because min-heap, we will only infrequently encounter
+        # the case when we reencounter a node
+        # but we can check against closed set for that.
+        heapq.heappush(openset, (0, start, None))
+        final_path = []
+        found = False
+        # while openset evaluates to T as long as openset is not empty
+        while openset and not found:
+            f, node, origin = heapq.heappop(openset)
 
-                path[node] = origin
+            path[node] = origin
 
-                if node is end:
-                    found = True
-                    break
-                # generate successors
-                edges = cls.get_neighbors(node)
-                # add to open set
-                for e in edges:
-                    # don't go to nodes we hvae already visited
-                    if e[0] in closedset:
-                        continue
-                    f_score = e[-1] + cls.dist(e[0], end)
-                    heapq.heappush(openset, (f_score, e[0], node))
-                closedset.add(node)
-            c = end
-            if found == False:
-                return (-1, None)
-            while c is not None:
-                final_path.append(c)
-                c = path[c]
-            final_path = final_path[::-1]
-            # compute distance
-            total_distance = cls.compute_distance(final_path)
-            return (total_distance, final_path)
+            if node == end:
+                found = True
+                break
+            
+            if node in closedset:
+                continue # we already encountered it
+
+            # generate successors
+            edges = cls.get_neighbors(node)
+            # add to open set
+            for e in edges:
+                # don't go to nodes we hvae already visited
+                if e[0] in closedset:
+                    continue
+                f_score = e[-1] + cls.dist(e[0], end)
+                heapq.heappush(openset, (f_score, e[0], node))
+            closedset.add(node)
+        c = end
+        if found == False:
+            return (-1, None)
+        while c is not None:
+            final_path.append(c)
+            c = path[c]
+        final_path = final_path[::-1]
+        # compute distance
+        total_distance = cls.compute_distance(final_path)
+        return (total_distance, final_path)
+    
     def update_event(cls, simul_time): 
         local_copy = deepcopy(cls._graph) 
          
@@ -142,7 +152,7 @@ if __name__ == "__main__":
     import sys
     import pickle
     g = Graph()
-    g.init_random(N=100, p=0.01)
+    g.init_file("../pickles/graph.pypkle")
     # verify good graph
     nodes = g.get_nodes()
     dumped = False
@@ -154,9 +164,10 @@ if __name__ == "__main__":
                 n2 = nodes[j]
                 try:
                     dist, path = g.find_shortest_path(n1, n2)
-                    print(n1, n2, dist, path)
+                    if (dist == -1): 
+                        print(n1, n2) 
                 except:
-                    print(n1, n2, random_int, file=sys.stderr)
+                    print(n1, n2, random_int)
                     if not dumped:
                         with open("graph_" + str(random_int) + ".pickle", 'wb') as f:
                             pickle.dump(g._graph, f)
