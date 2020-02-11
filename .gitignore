@@ -1,2 +1,15 @@
+# Config and cache 
 .vscode/
+.ipynb_checkpoints
+
+# Python cache 
 __pycache__/
+__pycache__
+*.pyc 
+
+
+# raw data 
+data/
+
+# Macs 
+.DS_Store
