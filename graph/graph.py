@@ -1,18 +1,32 @@
-import random
 import math
 import heapq
 import itertools
 from copy import deepcopy
 from threading import Lock
 import pickle 
-
+import numpy.random as random 
+RUSH_HOUR_START = 6
+RUSH_HOUR_END = 10 
 class Graph:
     _graph = None
     _dist = None 
     _heuristic = None 
     _lock = None
     _lock_init = False
-    heuristic = Graph.mdist 
+
+
+    @classmethod
+    def dist(cls, N1,N2):
+        x1, y1 = cls._graph[N1][0]
+        x2, y2 = cls._graph[N2][0]
+        return ((x1 - x2)**2 + (y1 - y2)**2)**(0.5)
+    @classmethod 
+    def mdist(cls, N1, N2): 
+        x1, y1 = cls._graph[N1][0]
+        x2, y2 = cls._graph[N2][0]
+        return abs(x1-x2) + abs(y1-y2)
+
+    heuristic = mdist 
     
     @classmethod 
     def init(cls): 
@@ -44,6 +58,7 @@ class Graph:
         '''
         Initialize a random graph with no planarity
         '''
+        import random
         nodes = tuple(range(N))
         weights = list((1 + i for i in range(max_weight)))
         edges = []
@@ -90,17 +105,6 @@ class Graph:
         return cls._graph[node][-1]
 
     @classmethod
-    def dist(cls, N1,N2):
-        x1, y1 = cls._graph[N1][0]
-        x2, y2 = cls._graph[N2][0]
-        return ((x1 - x2)**2 + (y1 - y2)**2)**(0.5)
-    @classmethod 
-    def mdist(cls, N1, N2): 
-        x1, y1 = cls._graph[N1][0]
-        x2, y2 = cls._graph[N2][0]
-        return abs(x1-x2) + abs(y1-y2)
-
-    @classmethod
     def compute_distance(cls, path):
         d = 0
         for i, node in enumerate(path):
@@ -115,67 +119,107 @@ class Graph:
     
     @classmethod
     def find_shortest_path(cls, start, end):
-        # we're doing to do a* for now
-        openset = []
-        # save node, origin pairs
-        path = dict()
-        closedset = set()
-        # openset contains f-score = weight + heuristic
-        # closed set only contains node
-        # we can just re-add to heap when node is encountered again
-        # because min-heap, we will only infrequently encounter
-        # the case when we reencounter a node
-        # but we can check against closed set for that.
-        push = heapq.heappush 
-        pop = heapq.heappop 
-        push(openset, (0, start, None))
-        final_path = []
-        found = False
-        # while openset evaluates to T as long as openset is not empty
-        while openset and not found:
-            f, node, origin = pop(openset)
-
-            path[node] = origin
-
-            if node == end:
-                found = True
-                break
-            
-            if node in closedset:
-                continue # we already encountered it
-
-            # generate successors
-            edges = cls.get_neighbors(node)
-            # add to open set
-            for e in edges:
-                # don't go to nodes we hvae already visited
-                if e[0] in closedset:
-                    continue
-                f_score = e[-1] + cls._heuristic[(e[0], end)]
-                push(openset, (f_score, e[0], node))
-            closedset.add(node)
-        c = end
-        if found == False:
-            return (-1, None)
-        while c is not None:
-            final_path.append(c)
-            c = path[c]
-        final_path = final_path[::-1]
-        # compute distance
-        total_distance = cls.compute_distance(final_path)
-        return (total_distance, final_path)
-    
-    def update_event(cls, simul_time): 
-        local_copy = deepcopy(cls._graph) 
-         
         with cls._lock: 
-            cls._graph = local_copy
+            # we're doing to do a* for now
+            openset = []
+            # save node, origin pairs
+            path = dict()
+            closedset = set()
+            # openset contains f-score = weight + heuristic
+            # closed set only contains node
+            # we can just re-add to heap when node is encountered again
+            # because min-heap, we will only infrequently encounter
+            # the case when we reencounter a node
+            # but we can check against closed set for that.
+            push = heapq.heappush 
+            pop = heapq.heappop 
+            push(openset, (0, start, None))
+            final_path = []
+            found = False
+            # while openset evaluates to T as long as openset is not empty
+            while openset and not found:
+                f, node, origin = pop(openset)
+
+                path[node] = origin
+
+                if node == end:
+                    found = True
+                    break
+                
+                if node in closedset:
+                    continue # we already encountered it
+
+                # generate successors
+                edges = cls.get_neighbors(node)
+                # add to open set
+                for e in edges:
+                    # don't go to nodes we hvae already visited
+                    if e[0] in closedset:
+                        continue
+                    f_score = e[-1] + cls._heuristic[(e[0], end)]
+                    push(openset, (f_score, e[0], node))
+                closedset.add(node)
+            c = end
+            if found == False:
+                return (-1, None)
+            while c is not None:
+                final_path.append(c)
+                c = path[c]
+            final_path = final_path[::-1]
+            # compute distance
+            total_distance = cls.compute_distance(final_path)
+            return (total_distance, final_path)
+        
+        def update_event(cls, requsted_time): 
+            ''' not ready''' 
+            local_copy = deepcopy(cls._graph) 
+            
+            interpolate_req = False 
+            interp_weight_1 = 1 
+            interp_weight_2 = 0
+            start = 0 
+            end = 0
+            if requsted_time != int(requsted_time): 
+                interpolate_req = True 
+            else: 
+                start = math.floor(requsted_time)
+                end = math.ceil(requsted_time)
+                interp_weight_1 = requsted_time - start 
+                interp_weight_2 = 1 - interp_weight_1
+            for node in local_copy.keys(): 
+                node_entry = local_copy[node] 
+                edge_entry = node_entry[-1]
+                new_edges = deque()
+                edge_dist = None
+                for neighbor, weight in edge_entry: 
+                    # grab distribution 
+                    if not interpolate_req: 
+                        edge_dist = cls._dist[(node, neighbor)][requsted_time]
+                    else: 
+                        edge_dist_1 = cls._dist[(node, neighbor)][start]
+                        edge_dist_2 = cls._dist[(node, neighbor)][end] 
+                        wa_mean = interp_weight_1 * edge_dist_1['mean'] + interp_weight_2 * edge_dist_2['mean']
+                        wa_std  = (interp_weight_1 ** 2) * (edge_dist_1['stdev'] ** 2)  + (interp_weight_2**2)  * (edge_dist_2['stdev'] ** 2)
+                        wa_gmean = interp_weight_1 * edge_dist_1['gmean'] + interp_weight_2 * edge_dist_2['gmean']
+                        wa_gstdev = (interp_weight_1 ** 2) * (edge_dist_1['gstdev']**2) + (interp_weight_2 ** 2) * (edge_dist_2['gmean'] ** 2)
+                        edge_dist = {
+                            "mean": wa_mean, 
+                            "stdev": wa_std, 
+                            "gmean": wa_gmean, 
+                            "gstdev": wa_gstdev
+                        }
+                    # draw from distribution 
+                    new_weight = random.lognormal(mean=edge_dist['gmean'], sigma=edge_dist['gstdev']) 
+                    new_edges.append((neighbor, new_weight))
+            with cls._lock: 
+                cls._graph = local_copy
 
 
 
 if __name__ == "__main__":
     import sys
     import pickle
+    import random
     g = Graph()
     g.init_file("../pickles/graph.pypkle")
     # verify good graph
