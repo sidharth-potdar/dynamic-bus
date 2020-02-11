@@ -26,7 +26,7 @@ class Graph:
         x2, y2 = cls._graph[N2][0]
         return abs(x1-x2) + abs(y1-y2)
 
-    heuristic = mdist 
+    heuristic = dist 
     
     @classmethod 
     def init(cls): 
@@ -169,9 +169,10 @@ class Graph:
             # compute distance
             total_distance = cls.compute_distance(final_path)
             return (total_distance, final_path)
-        
+
+    @classmethod
     def update_event(cls, requsted_time): 
-        ''' currently synchronous ''' 
+        ''' not ready''' 
         local_copy = deepcopy(cls._graph) 
         interpolate_req = False 
         interp_weight_1 = 1 
@@ -180,7 +181,6 @@ class Graph:
         end = 0
         if requsted_time != int(requsted_time): 
             interpolate_req = True 
-        else: 
             start = math.floor(requsted_time)
             end = math.ceil(requsted_time)
             interp_weight_1 = requsted_time - start 
@@ -198,9 +198,9 @@ class Graph:
                     edge_dist_1 = cls._dist[(node, neighbor)][start]
                     edge_dist_2 = cls._dist[(node, neighbor)][end] 
                     wa_mean = interp_weight_1 * edge_dist_1['mean'] + interp_weight_2 * edge_dist_2['mean']
-                    wa_std  = (interp_weight_1 ** 2) * (edge_dist_1['stdev'] ** 2)  + (interp_weight_2**2)  * (edge_dist_2['stdev'] ** 2)
+                    wa_std  = math.sqrt((interp_weight_1 ** 2) * (edge_dist_1['stdev'] ** 2)  + (interp_weight_2**2)  * (edge_dist_2['stdev'] ** 2))
                     wa_gmean = interp_weight_1 * edge_dist_1['gmean'] + interp_weight_2 * edge_dist_2['gmean']
-                    wa_gstdev = (interp_weight_1 ** 2) * (edge_dist_1['gstdev']**2) + (interp_weight_2 ** 2) * (edge_dist_2['gmean'] ** 2)
+                    wa_gstdev = math.sqrt((interp_weight_1 ** 2) * (edge_dist_1['gstdev']**2) + (interp_weight_2 ** 2) * (edge_dist_2['gstdev'] ** 2))
                     edge_dist = {
                         "mean": wa_mean, 
                         "stdev": wa_std, 
@@ -213,8 +213,6 @@ class Graph:
             local_copy[node] = (node_entry[0], tuple(new_edges))
         with cls._lock: 
             cls._graph = local_copy
-
-
 
 if __name__ == "__main__":
     import sys
