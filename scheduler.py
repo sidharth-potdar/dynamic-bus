@@ -23,7 +23,7 @@ class Scheduler:
         start_nodes = random.choices(graph.get_nodes(), k=num_buses)
         cls.buses = { i : { "rides": [], "route": [], "location": start_nodes[i] } for i in range(num_buses)}
         cls.ride_statuses = {}
-        cls.queue = comm
+        cls.comm = comm
         cls.graph = graph
 
     @classmethod
@@ -85,7 +85,7 @@ class Scheduler:
         Passes given event objects back to main
         '''
         for e in events:
-            print(cls.comm.send(e))
+            cls.comm.send(e)
 
 if __name__ == "__main__":
     scheduler = Scheduler()

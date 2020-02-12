@@ -40,8 +40,9 @@ class Engine:
 
         self.now = event.getExecutionPoint()
         events = event.execute()
-        for e in events: 
-            self.schedule(e) 
+        if events is not None: 
+            for e in events: 
+                self.schedule(e) 
 
         #TODO more logging
         self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))

@@ -8,7 +8,7 @@ class EventProcess(Process):
         super(EventProcess, self).__init__()
         # Time limit is 3 hr but make it a variable someplace
         # queue is a pipe now 
-        self._queue = queue
+        self._comm = queue
         self._id = id
         self._graph = graph
         self._engine = engine
@@ -36,5 +36,5 @@ class EventProcess(Process):
             # based on scheduler logic and wait times and intra taz travel time.
             event = RequestEvent(origin_node=origin_node, destination_node=destination_node, ts=self._engine.getSimulationTime() + 5, current_ts=self._engine.getSimulationTime())
             event.event = self._id
-            self._queue.send(event)
-        print("Time expired.")
+            self._comm.send(event)
+            time.sleep(1); 
