@@ -1,6 +1,6 @@
 from .event import Event
 from .schedule_event import ScheduleEvent
-from scheduler import Scheduler
+from scheduler.scheduler import Scheduler
 
 import time
 

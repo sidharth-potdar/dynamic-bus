@@ -2,7 +2,7 @@ from uuid import uuid4
 import random
 import time
 
-from graph import Graph
+from scheduler.graph import Graph
 
 class Scheduler:
     num_buses = 20

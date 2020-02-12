@@ -5,14 +5,18 @@ from copy import deepcopy
 from threading import Lock
 import pickle 
 import numpy.random as random 
+from scheduler.graph.updater import GraphUpdater 
+
 RUSH_HOUR_START = 6
 RUSH_HOUR_END = 10 
+
 class Graph:
     _graph = None
     _dist = None 
     _heuristic = None 
     _lock = None
     _lock_init = False
+    _update_thread = None 
 
 
     @classmethod
@@ -33,6 +37,9 @@ class Graph:
         if not cls._lock_init: 
             cls._lock = Lock() 
             cls._lock_init = True 
+            cls._update_thread = GraphUpdater(cls)
+            cls._update_thread.start() 
+
     @classmethod
     def init_file(cls, file_string): 
         cls.init() 
@@ -171,48 +178,8 @@ class Graph:
             return (total_distance, final_path)
 
     @classmethod
-    def update_event(cls, requsted_time): 
-        ''' not ready''' 
-        local_copy = deepcopy(cls._graph) 
-        interpolate_req = False 
-        interp_weight_1 = 1 
-        interp_weight_2 = 0
-        start = 0 
-        end = 0
-        if requsted_time != int(requsted_time): 
-            interpolate_req = True 
-            start = math.floor(requsted_time)
-            end = math.ceil(requsted_time)
-            interp_weight_1 = requsted_time - start 
-            interp_weight_2 = 1 - interp_weight_1
-        for node in local_copy.keys(): 
-            node_entry = local_copy[node] 
-            edge_entry = node_entry[-1]
-            new_edges = []
-            edge_dist = None
-            for neighbor, weight in edge_entry: 
-                # grab distribution 
-                if not interpolate_req: 
-                    edge_dist = cls._dist[(node, neighbor)][requsted_time]
-                else: 
-                    edge_dist_1 = cls._dist[(node, neighbor)][start]
-                    edge_dist_2 = cls._dist[(node, neighbor)][end] 
-                    wa_mean = interp_weight_1 * edge_dist_1['mean'] + interp_weight_2 * edge_dist_2['mean']
-                    wa_std  = math.sqrt((interp_weight_1 ** 2) * (edge_dist_1['stdev'] ** 2)  + (interp_weight_2**2)  * (edge_dist_2['stdev'] ** 2))
-                    wa_gmean = interp_weight_1 * edge_dist_1['gmean'] + interp_weight_2 * edge_dist_2['gmean']
-                    wa_gstdev = math.sqrt((interp_weight_1 ** 2) * (edge_dist_1['gstdev']**2) + (interp_weight_2 ** 2) * (edge_dist_2['gstdev'] ** 2))
-                    edge_dist = {
-                        "mean": wa_mean, 
-                        "stdev": wa_std, 
-                        "gmean": wa_gmean, 
-                        "gstdev": wa_gstdev
-                    }
-                # draw from distribution 
-                new_weight = random.normal(edge_dist['gmean'], edge_dist['gstdev']) 
-                new_edges.append((neighbor, new_weight))
-            local_copy[node] = (node_entry[0], tuple(new_edges))
-        with cls._lock: 
-            cls._graph = local_copy
+    def update_listener(cls, requsted_time): 
+        cls._update_thread.request_update(requsted_time)
 
 if __name__ == "__main__":
     import sys

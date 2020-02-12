@@ -37,4 +37,4 @@ class EventProcess(Process):
             event = RequestEvent(origin_node=origin_node, destination_node=destination_node, ts=self._engine.getSimulationTime() + 5, current_ts=self._engine.getSimulationTime())
             event.event = self._id
             self._comm.send(event)
-            time.sleep(1); 
+            time.sleep(0.1)

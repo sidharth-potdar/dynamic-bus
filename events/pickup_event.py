@@ -1,5 +1,5 @@
 from .event import Event
-from scheduler import Scheduler
+from scheduler.scheduler import Scheduler
 
 class PickupEvent(Event):
     def __init__(self, ts, ride_id, bus_id, location, priority=1):

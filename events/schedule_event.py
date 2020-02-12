@@ -1,7 +1,7 @@
 from .event import Event
 from .pickup_event import PickupEvent
 from .dropoff_event import DropoffEvent
-from scheduler import Scheduler
+from scheduler.scheduler import Scheduler
 
 class ScheduleEvent(Event):
     def __init__(self, ts, current_ts, ride_id, bus_id, origin_node, destination_node, priority=1):
