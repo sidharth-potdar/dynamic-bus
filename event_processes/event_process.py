@@ -7,6 +7,7 @@ class EventProcess(Process):
     def __init__(self, queue, id, graph, engine, pickup_dist, dropoff_dist, timeLimit = 10800):
         super(EventProcess, self).__init__()
         # Time limit is 3 hr but make it a variable someplace
+        # queue is a pipe now 
         self._queue = queue
         self._id = id
         self._graph = graph
@@ -23,8 +24,8 @@ class EventProcess(Process):
             while not found_ride:
                 # TODO Replace 7 with variable from engine to indicate start of rush hr once code works
                 current_hr = 7 + (self._engine.getSimulationTime() // 3600)
-                origin_node = random.choices(population=self._graph.get_nodes(), k=1, weights=self._pickup_dist[(day_of_the_week, current_hr)])
-                destination_node = random.choices(population=self._graph.get_nodes(), k= 1, weights=self._dropoff_dist[(day_of_the_week, current_hr)])
+                origin_node = random.choices(population=self._graph.get_nodes(), k=1)
+                destination_node = random.choices(population=self._graph.get_nodes(), k= 1)
                 origin_node = origin_node[0]
                 destination_node = destination_node[0]
 
@@ -35,4 +36,5 @@ class EventProcess(Process):
             # based on scheduler logic and wait times and intra taz travel time.
             event = RequestEvent(origin_node=origin_node, destination_node=destination_node, ts=self._engine.getSimulationTime() + 5, current_ts=self._engine.getSimulationTime())
             event.event = self._id
-            self._queue.put(event)
+            self._queue.send(event)
+        print("Time expired.")

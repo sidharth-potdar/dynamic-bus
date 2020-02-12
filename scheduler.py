@@ -10,11 +10,11 @@ class Scheduler:
     start_nodes = []
     buses = {}
     ride_statuses = {}
-    queue = None
+    comm = None
     graph = None
 
     @classmethod
-    def init(cls, graph, queue, num_buses=20, bus_capacity=4):
+    def init(cls, graph, comm, num_buses=20, bus_capacity=4):
         '''
         Initialize the scheduler with given constraints
         '''
@@ -23,7 +23,7 @@ class Scheduler:
         start_nodes = random.choices(graph.get_nodes(), k=num_buses)
         cls.buses = { i : { "rides": [], "route": [], "location": start_nodes[i] } for i in range(num_buses)}
         cls.ride_statuses = {}
-        cls.queue = queue
+        cls.queue = comm
         cls.graph = graph
 
     @classmethod
@@ -82,10 +82,10 @@ class Scheduler:
     @classmethod
     def pass_events(cls, *events):
         '''
-        Passes given event objects back to multiprocessing queue for engine to execute
+        Passes given event objects back to main
         '''
         for e in events:
-            cls.queue.put(e)
+            print(cls.comm.send(e))
 
 if __name__ == "__main__":
     scheduler = Scheduler()

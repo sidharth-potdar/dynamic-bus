@@ -27,7 +27,10 @@ class Engine:
 
     def tick(self):
         # pop from heapq
-        priority, event = heapq.heappop(self._queue)
+        if (len(self._queue) > 0): 
+            priority, event = heapq.heappop(self._queue)
+        else: 
+            return 
 
         while not event.isValid():
             # TODO - some sort of logging
@@ -36,7 +39,9 @@ class Engine:
             priority, event = heapq.heappop(self._queue)
 
         self.now = event.getExecutionPoint()
-        event.execute()
+        events = event.execute()
+        for e in events: 
+            self.schedule(e) 
 
         #TODO more logging
         self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))

@@ -21,7 +21,7 @@ class RequestEvent(Event):
         nearest_bus = Scheduler.find_nearest_bus(self.origin_node)
         if nearest_bus is not None:
             schedule_event = ScheduleEvent(ts=self.ts + 5, current_ts=self.ts, ride_id=self._id, bus_id=nearest_bus, origin_node=self.origin_node, destination_node=self.destination_node)
-            Scheduler.pass_events(schedule_event)
+            return [schedule_event]
         else:
             # TODO: logic for passing event back to engine
             # Reschedule event for a later time?

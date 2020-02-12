@@ -12,25 +12,29 @@ from volume_dist import generateDistributions
 
 
 def main():
-    queue = mp.Queue()
+    scheduler_comm_e, scheduler_comm_s = mp.Pipe(True)
+    eventgen_comm_e, eventgen_comm_g = mp.Pipe(True)
     graph = Graph()
-    graph.init_random()
+    graph.init_file("./pickles/graph.pypkle")
     scheduler = Scheduler()
-    scheduler.init(graph, queue)
+    scheduler.init(graph, scheduler_comm_s)
     engine = Engine()
 
     pickup_dist, dropoff_dist = generateDistributions()
 
-    processes = [EventProcess(queue, i, graph, engine, pickup_dist, dropoff_dist) for i in range(1)]
+    processes = [EventProcess(eventgen_comm_g, i, graph, engine, pickup_dist, dropoff_dist) for i in range(1)]
 
     for p in processes:
         p.start()
 
     while True:
-        event = queue.get()
-        engine.schedule(event)
-
+        # check to see if any events are available 
+        if scheduler_comm_e.poll(): 
+            print("Found data on scheduler comm")
+            engine.schedule(scheduler_comm_e.recv()) 
+        if eventgen_comm_e.poll(): 
+            print("Found data on Event Gen Comm. ")
+            engine.schedule(eventgen_comm_e.recv())
         engine.tick()
-
 if __name__=="__main__":
     main()

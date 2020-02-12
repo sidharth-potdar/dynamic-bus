@@ -34,3 +34,34 @@ class Event:
         - generate new events, etc
         '''
         pass
+    
+    def __le__(self, other): 
+        return self.__lt__(other) or self.__eq__(other) 
+    
+    def __ge__(self, other): 
+        return self.__gt__(other) or self.__eq__(other) 
+    
+    def __lt__(self, other): 
+        if self._execute_at < other._execute_at: 
+            return True 
+        elif self._execute_at == other._execute_at: 
+            if self._scheduled_ts < other._scheduled_ts: 
+                return True 
+            else: 
+                return False 
+        else: 
+            return False 
+
+    def __gt__(self, other): 
+        if self._execute_at > other._execute_at: 
+            return True 
+        elif self._execute_at == other._execute_at: 
+            if self._scheduled_ts > other._scheduled_ts: 
+                return True 
+            else: 
+                return False 
+        else: 
+            return False 
+
+    def __eq__(self, other): 
+        return self._execute_at == other._execute_at and self._scheduled_ts == other._scheduled_ts
