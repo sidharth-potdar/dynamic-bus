@@ -18,11 +18,6 @@ class RequestEvent(Event):
         '''
         print(f"Executing ride request event {self._id} at {self.getExecutionPoint()} from {self.origin_node} to {self.destination_node}")
         Scheduler.request_ride(self._id)
-        nearest_bus = Scheduler.find_nearest_bus(self.origin_node)
-        if nearest_bus is not None:
-            schedule_event = ScheduleEvent(ts=self.ts + 5, current_ts=self.ts, ride_id=self._id, bus_id=nearest_bus, origin_node=self.origin_node, destination_node=self.destination_node)
-            return [schedule_event]
-        else:
-            # TODO: logic for passing event back to engine
-            # Reschedule event for a later time?
-            pass
+        schedule_event = ScheduleEvent(ts=self.ts + 5, current_ts=self.ts, ride_id=self._id, origin_node=self.origin_node, destination_node=self.destination_node)
+        
+        return [schedule_event]
