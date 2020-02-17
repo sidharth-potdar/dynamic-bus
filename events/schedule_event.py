@@ -9,13 +9,16 @@ class ScheduleEvent(Event):
         self.ride_id = ride_id
         self.origin_node = origin_node
         self.destination_node = destination_node
+        self.bus_id = None
 
     def execute(self):
         '''
         Executes the pickup event
         '''
-        print(f"Executing schedule event {self.ride_id} at {self.getExecutionPoint()} on bus {self.bus_id}")
-        time_to_pickup, time_to_dropoff = Scheduler.assign_ride(self.ride_id, self.origin_node, self.destination_node)
+        print(f"Executing schedule event {self.ride_id} at {self.getExecutionPoint()}")
+        bus_id, time_to_pickup, time_to_dropoff = Scheduler.assign_ride(self.ride_id, self.origin_node, self.destination_node)
+        self.bus_id = bus_id
+        
         pickup_event = PickupEvent(ts=time_to_pickup, ride_id=self.ride_id, bus_id=self.bus_id, location=self.origin_node)
         dropoff_event = DropoffEvent(ts=time_to_dropoff, ride_id=self.ride_id, bus_id=self.bus_id, location=self.destination_node)
 
