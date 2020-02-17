@@ -100,19 +100,18 @@ class Scheduler:
         # sys.exit()
 
         # calculate time and routes for bus to get to origin, and from origin to destination
-        time_to_origin, start_route = cls.graph.find_shortest_path(cls.buses[bus_id]["location"], origin_node)
+        time_to_origin, start_route = cls.graph.find_shortest_path(cls.buses[nearest_bus]["location"], origin_node)
         time_to_destination, route = cls.graph.find_shortest_path(origin_node, destination_node)
 
         # update bus with new ride and route
-        cls.buses[bus_id]["rides"].append(ride_id)
-        cls.buses[bus_id]["route"] = [x for x in start_route] + [y for y in route]
+        cls.buses[nearest_bus]["route"] = [x for x in start_route] + [y for y in route]
 
         cls.ride_statuses[ride_id]["status"] = "scheduled"
 
         time_to_pickup = time.time() + time_to_origin
         time_to_dropoff = time_to_pickup + time_to_destination
 
-        return time_to_pickup, time_to_dropoff
+        return nearest_bus, time_to_pickup, time_to_dropoff
 
     @classmethod
     def pass_events(cls, *events):

@@ -15,7 +15,7 @@ class DropoffEvent(Event):
         print(f"Executing dropoff event {self.ride_id} at {self.getExecutionPoint()} on bus {self.bus_id}")
         Scheduler.ride_statuses[self.ride_id]["status"] = "completed"
         Scheduler.buses[self.bus_id] = {
-            "rides": [],
+            "rides": {},
             "route": [],
             "location": self.location
         }
