@@ -4,6 +4,7 @@ import time
 import sys
 
 from scheduler.graph import Graph
+from scheduler.graph import GraphUpdater
 from events import PickupEvent, DropoffEvent 
 from planners import GeneticAlgorithmPlanner
 import threading 
@@ -11,15 +12,28 @@ import multiprocessing as mp
 from collections import deque 
 
 
-
 class Scheduler(mp.Process): 
     def __init__(self, pipe_recv_from_engine = None, pipe_send_to_engine = None, graph=None, **kwargs): 
         super().__init__() 
+        # Initiate Pipes 
         self.to_engine = pipe_send_to_engine
         self.from_engine = pipe_recv_from_engine 
+
+        # Initialize Communication and Core
         self.comm = SchedulerComm(self, daemon=True) 
-        self.core = SchedulerCore(self) 
+        self.core = SchedulerCore(self)
         SchedulerCore.init(graph)
+
+        # Setup Graph 
+        self.graph = graph 
+        ## Setup Graph Lock 
+        self._graph_lock = threading.Lock()
+        self.graph.init_multicore(self._graph_lock)
+        ## setup updater 
+        self._graph_updater = GraphUpdater(self.graph, self._graph_lock)
+
+        # Start Threads 
+
         self.execution_queue = deque() 
 
     def send(self, msg): 
@@ -31,8 +45,12 @@ class Scheduler(mp.Process):
     def run(self): 
         self.comm.start() 
         self.core.start() 
+        self._graph_updater.start()
         self.core.join()
     
+    def update(self, timestamp): 
+        self._graph_updater.request_update(timestamp)
+
     def getEngineRecvComm(self): 
         return self.from_engine
     def getEngineSendComm(self): 
@@ -210,6 +228,9 @@ class SchedulerCore(threading.Thread):
         for e in events:
             cls.scheduler.send(e)
 
+    @classmethod
+    def graph_update(cls, requested_timestamp): 
+        cls.scheduler.update(requested_timestamp)
 if __name__ == "__main__":
     scheduler = Scheduler()
     scheduler.init()

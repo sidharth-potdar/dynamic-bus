@@ -14,10 +14,7 @@ class Graph:
     _graph = None
     _dist = None 
     _heuristic = None 
-    _lock = None
-    _lock_init = False
-    _update_thread = None 
-
+    _lock = None 
 
     @classmethod
     def dist(cls, N1,N2):
@@ -33,16 +30,11 @@ class Graph:
     heuristic = dist 
     
     @classmethod 
-    def init(cls): 
-        if not cls._lock_init: 
-            cls._lock = Lock() 
-            cls._lock_init = True 
-            cls._update_thread = GraphUpdater(cls)
-            cls._update_thread.start() 
+    def init_multicore(cls, lock): 
+        cls._lock = lock 
 
     @classmethod
     def init_file(cls, file_string): 
-        cls.init() 
         with open(file_string, 'rb') as f: 
             graph_dict, dist_dict = pickle.load(f) 
         cls._graph = graph_dict
@@ -177,9 +169,6 @@ class Graph:
             total_distance = cls.compute_distance(final_path)
             return (total_distance, final_path)
 
-    @classmethod
-    def update_listener(cls, requsted_time): 
-        cls._update_thread.request_update(requsted_time)
 
 if __name__ == "__main__":
     import sys

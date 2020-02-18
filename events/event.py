@@ -6,7 +6,10 @@ class Event:
     # __counter = itertools.count()
 
     def __init__(self, ts=None, current_ts=None, *args, **kwargs):
-        self._scheduled_ts = current_ts
+        if current_ts is None: 
+            self._scheduled_ts = time.time() 
+        else: 
+            self._scheduled_ts = current_ts
         self._valid = True
         self._execute_at = ts
         # self._id = next(Event.__counter)

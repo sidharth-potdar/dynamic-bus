@@ -2,7 +2,7 @@ from multiprocessing import Process
 import time
 import random
 from events import RequestEvent
-
+from events import GraphUpdateEvent 
 class EventProcess(Process):
     def __init__(self, queue, id, graph, engine, pickup_dist, dropoff_dist, timeLimit = 10800):
         super(EventProcess, self).__init__()
@@ -18,6 +18,8 @@ class EventProcess(Process):
 
     def run(self):
         day_of_the_week = self._engine.getDayOfTheWeek()
+        update_event = GraphUpdateEvent(0, 7.5, 1) 
+        self._comm.send(update_event)
 
         while self._engine.getSimulationTime() < self._timeLimit:
             found_ride = False
