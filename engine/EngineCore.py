@@ -2,6 +2,7 @@ import logging
 import random 
 import heapq
 import threading
+import time 
 
 class EngineCore(threading.Thread):
     ''' Engine thread executes in background''' 
@@ -33,6 +34,8 @@ class EngineCore(threading.Thread):
 
     def run(self):
         print("Engine Booting")
+        last_time = time.time() 
+        i = 0 
         while True: 
             # pop from heapq
             if (len(self._queue) > 0): 
@@ -40,10 +43,14 @@ class EngineCore(threading.Thread):
                     priority, event = heapq.heappop(self._queue)
             else: 
                 continue 
-
+            i += 1
+            if i % 100 == 0: 
+                i = 0 
+                print("Executing 100 events in", time.time() - last_time)
+                last_time = time.time() 
             while not event.isValid():
                 # TODO - some sort of logging
-                self.logger.info("%s %s marked as invalid." % (event.__class__, event.getId()))
+                # self.logger.info("%s %s marked as invalid." % (event.__class__, event.getId()))
                 # Here mark invalid event
                 priority, event = heapq.heappop(self._queue)
 
@@ -56,7 +63,7 @@ class EngineCore(threading.Thread):
                 for call in results['scheduler_calls']:
                     self.engine.send(call)
             #TODO more logging
-            self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
+            # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
 
     def remove(self, *events):
         ''' helper method, even though events can atomically

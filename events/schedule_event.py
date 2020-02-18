@@ -14,7 +14,7 @@ class ScheduleEvent(Event):
         '''
         Executes the pickup event
         '''
-        print(f"Executing schedule event {self.ride_id} at {self.getExecutionPoint()}")
+        # print(f"Executing schedule event {self.ride_id} at {self.getExecutionPoint()}")
         # bus_id, time_to_pickup, time_to_dropoff = Scheduler.assign_ride(self.ride_id, self.origin_node, self.destination_node)
         
         return_dict = {

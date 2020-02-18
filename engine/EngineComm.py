@@ -15,17 +15,13 @@ class EngineComm(threading.Thread):
         while True: 
             if self.schedule_recv_comm.poll(): 
                 self.engine.schedule(self.schedule_recv_comm.recv()) 
-                print("EngineComm: Received Message on Schedule Comm")
             if self.eventgen_comm.poll(): 
                 self.engine.schedule(self.eventgen_comm.recv())
-                print("EngineComm: Received Message on Event Comm")
 
             if len(self.send_buffer) > 0: 
                 i = 0 # send 10 events a loop to avoid blocking communication 
-                print("EngineComm: Sending Message on Scheduler Comm")
                 while len(self.send_buffer) > 0 and i < EngineComm.MAX_LOOP_SENDS: 
                     msg = self.send_buffer.popleft()
-                    print(msg)
                     self.schedule_send_comm.send(msg)
                     i += 1
                     

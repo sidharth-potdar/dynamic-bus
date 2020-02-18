@@ -11,7 +11,7 @@ class PickupEvent(Event):
         '''
         Executes the pickup event
         '''
-        print(f"Executing pickup event {self.ride_id} at {self.getExecutionPoint()} on bus {self.bus_id}")
+        # print(f"Executing pickup event {self.ride_id} at {self.getExecutionPoint()} on bus {self.bus_id}")
         return_dict = {
             "scheduler_calls": [
                 {

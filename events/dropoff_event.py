@@ -12,7 +12,7 @@ class DropoffEvent(Event):
         '''
         Executes the dropoff event
         '''
-        print(f"Executing dropoff event {self.ride_id} at {self.getExecutionPoint()} on bus {self.bus_id}")
+        # print(f"Executing dropoff event {self.ride_id} at {self.getExecutionPoint()} on bus {self.bus_id}")
 
         return_dict = {
             "scheduler_calls" : [

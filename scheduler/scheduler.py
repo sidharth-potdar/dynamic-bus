@@ -51,13 +51,10 @@ class SchedulerComm(threading.Thread):
         return msg["function"] + "(" + ", ".join(map(str, msg['*args'])) + ")"
 
     def run(self): 
-        print("Scheduler Comm Booting")
         while True: 
             if self.engine_recv_comm.poll(): 
                 # add to execution queue 
                 msg = self.engine_recv_comm.recv(); 
-
-                print("Scheduler received call", self.format_msg(msg))
                 self.scheduler.execute(msg)
             if len(self.send_buffer) > 0: 
                 i = 0 
@@ -89,7 +86,6 @@ class SchedulerCore(threading.Thread):
         while True: 
             if len(self.execution_queue) > 0: 
                 msg = self.execution_queue.popleft() 
-                print("Executing message", msg["function"])
                 getattr(SchedulerCore, msg['function'])(*msg['*args'], **msg['**kwargs'])
 
     @classmethod
@@ -205,14 +201,13 @@ class SchedulerCore(threading.Thread):
             "route" : [],
             "location" : location
         }
-        
+
     @classmethod
     def pass_events(cls, *events):
         '''
         Passes given event objects back to multiprocessing queue for engine to execute
         '''
         for e in events:
-            print("sending", e)
             cls.scheduler.send(e)
 
 if __name__ == "__main__":
