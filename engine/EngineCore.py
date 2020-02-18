@@ -48,14 +48,13 @@ class EngineCore(threading.Thread):
                 priority, event = heapq.heappop(self._queue)
 
             self.now = event.getExecutionPoint()
-            events = event.execute()
-            if events is not None: 
-                for e in events: 
-                    if not e.is_complicated(): 
-                        self.schedule(e) 
-                    else: 
-                        self.engine.send(e)
-
+            results = event.execute()
+            if "events" in results: 
+                for e in results['events']: 
+                    self.schedule(e) 
+            if "scheduler_calls" in results: 
+                for call in results['scheduler_calls']:
+                    self.engine.send(call)
             #TODO more logging
             self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
 

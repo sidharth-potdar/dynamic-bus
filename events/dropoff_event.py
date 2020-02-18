@@ -13,9 +13,14 @@ class DropoffEvent(Event):
         Executes the dropoff event
         '''
         print(f"Executing dropoff event {self.ride_id} at {self.getExecutionPoint()} on bus {self.bus_id}")
-        Scheduler.ride_statuses[self.ride_id]["status"] = "completed"
-        Scheduler.buses[self.bus_id] = {
-            "rides": {},
-            "route": [],
-            "location": self.location
+
+        return_dict = {
+            "scheduler_calls" : [
+                {
+                    "function": "dropoff_event", 
+                    "*args" : (self.ride_id, self.bus_id, self.location), 
+                    "**kwargs" : {}
+                }
+            ]
         }
+        return return_dict

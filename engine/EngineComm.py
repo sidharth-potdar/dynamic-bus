@@ -24,7 +24,9 @@ class EngineComm(threading.Thread):
                 i = 0 # send 10 events a loop to avoid blocking communication 
                 print("EngineComm: Sending Message on Scheduler Comm")
                 while len(self.send_buffer) > 0 and i < EngineComm.MAX_LOOP_SENDS: 
-                    self.schedule_send_comm.send(self.send_buffer.popleft())
+                    msg = self.send_buffer.popleft()
+                    print(msg)
+                    self.schedule_send_comm.send(msg)
                     i += 1
                     
     def send(self, msg, **kwargs): 

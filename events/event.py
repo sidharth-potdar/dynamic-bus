@@ -13,11 +13,6 @@ class Event:
         self._id = uuid4()
         self.event = None
 
-    def is_complicated(self): 
-        ''' 
-        Override this, and return whether or not it should go to the scheduler process
-        ''' 
-        return NotImplementedError
 
     def isValid(self):
         '''

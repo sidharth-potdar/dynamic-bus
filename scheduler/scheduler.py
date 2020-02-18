@@ -4,9 +4,70 @@ import time
 import sys
 
 from scheduler.graph import Graph
+from events import PickupEvent, DropoffEvent 
 from planners import GeneticAlgorithmPlanner
+import threading 
+import multiprocessing as mp 
+from collections import deque 
 
-class Scheduler:
+
+
+class Scheduler(mp.Process): 
+    def __init__(self, pipe_recv_from_engine = None, pipe_send_to_engine = None, graph=None, **kwargs): 
+        super().__init__() 
+        self.to_engine = pipe_send_to_engine
+        self.from_engine = pipe_recv_from_engine 
+        self.comm = SchedulerComm(self, daemon=True) 
+        self.core = SchedulerCore(self) 
+        SchedulerCore.init(graph)
+        self.execution_queue = deque() 
+
+    def send(self, msg): 
+        self.comm.send(msg)
+
+    def execute(self, msg): 
+        self.core.execute(msg)
+
+    def run(self): 
+        self.comm.start() 
+        self.core.start() 
+        self.core.join()
+    
+    def getEngineRecvComm(self): 
+        return self.from_engine
+    def getEngineSendComm(self): 
+        return self.to_engine
+
+class SchedulerComm(threading.Thread): 
+    MAX_LOOP_SENDS = 10 
+    def __init__(self, scheduler, daemon=None): 
+        super().__init__(daemon=daemon, name="SchedulerComm") 
+        self.scheduler = scheduler
+        self.engine_recv_comm = self.scheduler.getEngineRecvComm() 
+        self.engine_send_comm = self.scheduler.getEngineSendComm()
+        self.send_buffer = deque() 
+
+    def format_msg(self, msg): 
+        return msg["function"] + "(" + ", ".join(map(str, msg['*args'])) + ")"
+
+    def run(self): 
+        print("Scheduler Comm Booting")
+        while True: 
+            if self.engine_recv_comm.poll(): 
+                # add to execution queue 
+                msg = self.engine_recv_comm.recv(); 
+
+                print("Scheduler received call", self.format_msg(msg))
+                self.scheduler.execute(msg)
+            if len(self.send_buffer) > 0: 
+                i = 0 
+                while len(self.send_buffer) > 0 and i < SchedulerComm.MAX_LOOP_SENDS: 
+                    self.engine_send_comm.send(self.send_buffer.popleft())  
+                    i += 1
+    def send(self, msg): 
+        self.send_buffer.append(msg) 
+
+class SchedulerCore(threading.Thread):
     num_buses = 2
     bus_capacity = 5
     start_nodes = []
@@ -14,9 +75,25 @@ class Scheduler:
     ride_statuses = {}
     queue = None
     graph = None
+    scheduler = None
+    def __init__(self, scheduler): 
+        super().__init__(name="SchedulerCore")
+        self.execution_queue = deque() 
+        self._scheduler = scheduler
+        SchedulerCore.scheduler = self._scheduler
+
+    def execute(self, msg): 
+        self.execution_queue.append(msg) 
+
+    def run(self): 
+        while True: 
+            if len(self.execution_queue) > 0: 
+                msg = self.execution_queue.popleft() 
+                print("Executing message", msg["function"])
+                getattr(SchedulerCore, msg['function'])(*msg['*args'], **msg['**kwargs'])
 
     @classmethod
-    def init(cls, graph, comm, num_buses=2, bus_capacity=5):
+    def init(cls, graph, num_buses=2, bus_capacity=5):
         '''
         Initialize the scheduler with given constraints
         '''
@@ -26,7 +103,6 @@ class Scheduler:
         # bus_rides dict maps from ride_ids to (origin, destination) tuple pairs
         cls.buses = { i : { "rides": {}, "route": [], "location": start_nodes[i] } for i in range(num_buses)}
         cls.ride_statuses = {}
-        cls.comm = comm
         cls.graph = graph
 
     @classmethod
@@ -111,15 +187,33 @@ class Scheduler:
         time_to_pickup = time.time() + time_to_origin
         time_to_dropoff = time_to_pickup + time_to_destination
 
-        return nearest_bus, time_to_pickup, time_to_dropoff
+        pickup_event = PickupEvent(ts=time_to_pickup, ride_id=ride_id, bus_id=nearest_bus, location=origin_node)
+        dropoff_event = DropoffEvent(ts=time_to_dropoff, ride_id=ride_id, bus_id=nearest_bus, location=destination_node)
 
+        cls.pass_events(pickup_event, dropoff_event)
+
+    @classmethod 
+    def pickup_event(cls, ride_id, bus_id, location): 
+        cls.ride_statuses[ride_id]["status"] = "picked up"
+        cls.buses[bus_id]["location"] = location 
+
+    @classmethod 
+    def dropoff_event(cls, ride_id, bus_id, location): 
+        cls.ride_statuses[ride_id]['status'] = 'completed'
+        cls.buses[bus_id] = {
+            "rides" : {}, 
+            "route" : [],
+            "location" : location
+        }
+        
     @classmethod
     def pass_events(cls, *events):
         '''
         Passes given event objects back to multiprocessing queue for engine to execute
         '''
         for e in events:
-            cls.comm.send(e)
+            print("sending", e)
+            cls.scheduler.send(e)
 
 if __name__ == "__main__":
     scheduler = Scheduler()
