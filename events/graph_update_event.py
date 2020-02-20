@@ -4,6 +4,7 @@ class GraphUpdateEvent(Event):
     def __init__(self, ts, simulation_time, priority=1):
         super(GraphUpdateEvent, self).__init__(ts)
         self.simulation_time = simulation_time
+        self.priority = priority
     def execute(self):
         '''
         Executes the pickup event
@@ -19,3 +20,4 @@ class GraphUpdateEvent(Event):
             ]
         }
         return return_dict
+

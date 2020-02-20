@@ -13,3 +13,6 @@ data/
 
 # Macs 
 .DS_Store
+
+# schema
+db_logging/logging_schema.txt

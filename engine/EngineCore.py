@@ -1,8 +1,10 @@
-import logging
+# import logging
 import random
 import heapq
 import threading
 import time
+from db_logging import EventLogger
+from events import EndEvent
 
 class EngineCore(threading.Thread):
     ''' Engine thread executes in background'''
@@ -14,10 +16,12 @@ class EngineCore(threading.Thread):
         # see if we can remove the dict
         self._dict = {}
         self.engine = engine
-        self.now = 6
+        self.now = 6 # Beginning of rush_hr
         #self.today = random.choice([0,1,2,3,4])
         #logging.basicConfig(filename='sim.log', filemode='w')
         #self.logger = logging.getLogger()
+
+        self.past_events = []
 
     def schedule(self, *events):
         with self._lock:
@@ -52,6 +56,7 @@ class EngineCore(threading.Thread):
                 priority, event = heapq.heappop(self._queue)
 
             self.now = event.getExecutionPoint()
+            self.past_events.append(event)
             results = event.execute()
             if "events" in results:
                 for e in results['events']:
@@ -61,6 +66,11 @@ class EngineCore(threading.Thread):
                     self.engine.send(call)
             #TODO more logging
             # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
+            if isinstance(event, EndEvent):
+            	el = EventLogger()
+            	el.log_events(past_events)
+            	break
+
 
     def remove(self, *events):
         ''' helper method, even though events can atomically

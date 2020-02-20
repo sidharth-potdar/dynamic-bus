@@ -22,3 +22,6 @@ class PickupEvent(Event):
             ]
         }
         return return_dict
+
+    def __repr__(self):
+        return f"(0,{self.getId()},0,{self.ts},{self.current_ts},{self.location},{self.priority},{self.bus_id})"

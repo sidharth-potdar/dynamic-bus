@@ -30,3 +30,7 @@ class RequestEvent(Event):
         }
         
         return return_dict
+
+
+    def __repr__(self):
+        return f"(0,{self.getId()},0,{self.ts},{self.current_ts},{self.origin_node},{self.destination_node},{self.priority})"
