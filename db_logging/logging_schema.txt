@@ -1,4 +1,4 @@
-CREATE TABLE Requests (
+CREATE TABLE IF NOT EXISTS Requests (
 	id INTEGER PRIMARY KEY,
 	ride_id INTEGER,
 	sim_id INTEGER,
@@ -10,7 +10,7 @@ CREATE TABLE Requests (
 	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
 );
 
-CREATE TABLE Schedules (
+CREATE TABLE IF NOT EXISTS Schedules (
 	id INTEGER PRIMARY KEY,
 	ride_id INTEGER,
 	sim_id INTEGER,
@@ -23,7 +23,7 @@ CREATE TABLE Schedules (
 	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
 );
 
-CREATE TABLE Pickups (
+CREATE TABLE IF NOT EXISTS Pickups (
 	id INTEGER PRIMARY KEY,
 	ride_id INTEGER,
 	sim_id INTEGER,
@@ -35,7 +35,7 @@ CREATE TABLE Pickups (
 	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
 );
 
-CREATE TABLE Dropoffs (
+CREATE TABLE IF NOT EXISTS Dropoffs (
 	id INTEGER PRIMARY KEY,
 	ride_id INTEGER,
 	sim_id INTEGER,
@@ -47,7 +47,7 @@ CREATE TABLE Dropoffs (
 	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
 );
 
-CREATE TABLE SimRuns (
+CREATE TABLE IF NOT EXISTS SimRuns (
 	sim_id INTEGER PRIMARY KEY,
 	num_rides INTEGER,
 	num_buses INTEGER,
