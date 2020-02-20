@@ -1,12 +1,12 @@
-import logging 
-import random 
+import logging
+import random
 import heapq
 import threading
 import time 
 from events import ScheduleEvent
 
 class EngineCore(threading.Thread):
-    ''' Engine thread executes in background''' 
+    ''' Engine thread executes in background'''
 
     def __init__(self, engine):
         super().__init__()
@@ -14,24 +14,21 @@ class EngineCore(threading.Thread):
         self._lock = engine.getLock()
         # see if we can remove the dict
         self._dict = {}
-        self.engine = engine  
-        self.now = 0
-        self.today = random.choice([0,1,2,3,4])
-        logging.basicConfig(filename='sim.log', filemode='w')
-        self.logger = logging.getLogger()
+        self.engine = engine
+        self.now = 6
+        #self.today = random.choice([0,1,2,3,4])
+        #logging.basicConfig(filename='sim.log', filemode='w')
+        #self.logger = logging.getLogger()
 
     def schedule(self, *events):
-        with self._lock: 
-            for event in events: 
+        with self._lock:
+            for event in events:
                 heapq.heappush(self._queue, (event.getExecutionPoint(), event))
         # If we can get remove working w/o this, we should
         self._dict[event.getId()] = event
 
     def getSimulationTime(self):
         return self.now
-
-    def getDayOfTheWeek(self):
-        return self.today
 
     def run(self):
         print("Engine Booting")
@@ -40,8 +37,8 @@ class EngineCore(threading.Thread):
         j = 0 
         while True: 
             # pop from heapq
-            if (len(self._queue) > 0): 
-                with self._lock: 
+            if (len(self._queue) > 0):
+                with self._lock:
                     priority, event = heapq.heappop(self._queue)
             else: 
                 continue 
@@ -80,5 +77,3 @@ class EngineCore(threading.Thread):
         invalidate themselves '''
         for event in events:
             event.invalidate()
-
-    
