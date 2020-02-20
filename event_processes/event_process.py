@@ -16,14 +16,9 @@ class EventProcess(Process):
         #self._pickup_dist = pickup_dist
         #self._dropoff_dist = dropoff_dist
         #self._timeLimit = timeLimit
-
         self._rides = prob_dist.generateRides()
 
-
-
     def run(self):
-        update_event = GraphUpdateEvent(0, 7.5, 1)
-        self._comm.send(update_event)
         for ride in self._rides:
             origin_node, destination_node, start_hr = ride
             event_ts = start_hr + random.random() # randomly pick a time within the hr to start
