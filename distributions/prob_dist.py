@@ -1,5 +1,6 @@
 import random
 import csv
+from operator import itemgetter
 
 def generateRides(multiplier=10):
     with open('distributions/ride_volume.csv','r') as ridef:
@@ -47,4 +48,11 @@ def generateRides(multiplier=10):
 
 
     generated_rides = random.choices(population=fth, weights=probs, k=num_rides)
+    for ride_index in range(len(generated_rides)):
+        start_ct, end_ct, start_hr = generated_rides[ride_index]
+        ts = start_hr + random.random()
+        generated_rides[ride_index] = (start_ct, end_ct, ts)
+
+    generated_rides.sort(key=itemgetter(2))
+
     return generated_rides

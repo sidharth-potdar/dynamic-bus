@@ -23,8 +23,7 @@ class EventProcess(Process):
         min_hr = None
         max_hr = None
         for ride in self._rides:
-            origin_node, destination_node, start_hr = ride
-            event_ts = start_hr + random.random() # randomly pick a time within the hr to start
+            origin_node, destination_node, event_ts = ride
             if min_hr is None: 
                 min_hr = event_ts
                 max_hr = event_ts
