@@ -5,7 +5,7 @@ import sys
 
 from scheduler.graph import Graph
 from scheduler.graph import GraphUpdater
-from events import PickupEvent, DropoffEvent 
+from events import PickupEvent, DropoffEvent, EndScheduleEvent
 from planners import GeneticAlgorithmPlanner
 import threading 
 import multiprocessing as mp 
@@ -18,7 +18,6 @@ class Scheduler(mp.Process):
         # Initiate Pipes 
         self.to_engine = pipe_send_to_engine
         self.from_engine = pipe_recv_from_engine 
-
         # Initialize Communication and Core
         self.comm = SchedulerComm(self, daemon=True) 
         self.core = SchedulerCore(self)
@@ -105,7 +104,6 @@ class SchedulerCore(threading.Thread):
             if len(self.execution_queue) > 0: 
                 msg = self.execution_queue.popleft() 
                 getattr(SchedulerCore, msg['function'])(*msg['*args'], **msg['**kwargs'])
-
     @classmethod
     def init(cls, graph, num_buses=2, bus_capacity=5):
         '''
@@ -168,8 +166,7 @@ class SchedulerCore(threading.Thread):
             bus_origin_node = cls.buses[nearest_bus]["location"]
             ride_origin_nodes = [x[0] for ride_id, x in cls.buses[nearest_bus]["rides"].items()]
             ride_dest_nodes = [x[1] for ride_id, x in cls.buses[nearest_bus]["rides"].items()]
-
-            planner = GeneticAlgorithmPlanner(cls.graph, bus_origin_node, ride_origin_nodes + ride_dest_nodes + [destination_node])
+            planner = GeneticAlgorithmPlanner(cls.graph, bus_origin_node, ride_origin_nodes + ride_dest_nodes + [destination_node]) 
             total_time, route = planner.find_optimal_route()
 
         cls.buses[nearest_bus]["rides"][ride_id] = (origin_node, destination_node)
@@ -204,7 +201,7 @@ class SchedulerCore(threading.Thread):
         pickup_event = PickupEvent(ts=time_to_pickup, ride_id=ride_id, bus_id=nearest_bus, location=origin_node)
         dropoff_event = DropoffEvent(ts=time_to_dropoff, ride_id=ride_id, bus_id=nearest_bus, location=destination_node)
 
-        cls.pass_events(pickup_event, dropoff_event)
+        cls.pass_events(pickup_event, dropoff_event, EndScheduleEvent())
 
     @classmethod 
     def pickup_event(cls, ride_id, bus_id, location): 

@@ -17,6 +17,8 @@ class Engine(mp.Process):
         self.comm = EngineComm(self, daemon=True, **kwargs)
         self.core = EngineCore(self, **kwargs)
         self.time = 0 
+        self.scheduleSemaphore = threading.Semaphore(0) 
+
 
     def getScheduleSendComm(self): 
         return self.to_scheduler

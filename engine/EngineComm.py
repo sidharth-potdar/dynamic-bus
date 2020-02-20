@@ -1,5 +1,6 @@
 import threading
 from collections import deque
+from events import EndScheduleEvent
 
 class EngineComm(threading.Thread):
     MAX_LOOP_SENDS = 10
@@ -14,7 +15,11 @@ class EngineComm(threading.Thread):
     def run(self): 
         while True: 
             if self.schedule_recv_comm.poll(): 
-                self.engine.schedule(self.schedule_recv_comm.recv()) 
+                res = self.schedule_recv_comm.recv() 
+                if type(res) == EndScheduleEvent: 
+                    self.engine.scheduleSemaphore.release() 
+                else: 
+                    self.engine.schedule(res) 
             if self.eventgen_comm.poll(): 
                 self.engine.schedule(self.eventgen_comm.recv())
 

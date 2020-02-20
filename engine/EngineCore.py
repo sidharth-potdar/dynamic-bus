@@ -3,6 +3,7 @@ import random
 import heapq
 import threading
 import time 
+from events import ScheduleEvent
 
 class EngineCore(threading.Thread):
     ''' Engine thread executes in background''' 
@@ -36,6 +37,7 @@ class EngineCore(threading.Thread):
         print("Engine Booting")
         last_time = time.time() 
         i = 0 
+        j = 0 
         while True: 
             # pop from heapq
             if (len(self._queue) > 0): 
@@ -43,11 +45,6 @@ class EngineCore(threading.Thread):
                     priority, event = heapq.heappop(self._queue)
             else: 
                 continue 
-            i += 1
-            if i % 100 == 0: 
-                i = 0 
-                print("Executing 100 events in", time.time() - last_time)
-                last_time = time.time() 
             while not event.isValid():
                 # TODO - some sort of logging
                 # self.logger.info("%s %s marked as invalid." % (event.__class__, event.getId()))
@@ -56,12 +53,25 @@ class EngineCore(threading.Thread):
 
             self.now = event.getExecutionPoint()
             results = event.execute()
+            j += 1
             if "events" in results: 
                 for e in results['events']: 
                     self.schedule(e) 
             if "scheduler_calls" in results: 
                 for call in results['scheduler_calls']:
                     self.engine.send(call)
+            if type(event) == ScheduleEvent:
+                now = time.time() 
+                if i % 100 == 0: 
+                    print(f"Executing {i} schedule events in", time.time() - last_time, ";", j, "other events executed")
+                    i = 0 
+                    j = 0
+                    last_time = time.time() 
+                self.engine.scheduleSemaphore.acquire() 
+                i += 1
+
+                # print("Slept for", time.time() - now, "seconds") 
+                # floors speed to 60x real life 
             #TODO more logging
             # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
 
