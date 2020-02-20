@@ -14,7 +14,7 @@ class RequestEvent(Event):
         Executes the ride request event by calling the scheduler
         '''
         # print(f"Executing ride request event {self._id} at {self.getExecutionPoint()} from {self.origin_node} to {self.destination_node}")
-        schedule_event = ScheduleEvent(ts=0, ride_id=self._id, origin_node=self.origin_node, destination_node=self.destination_node)
+        schedule_event = ScheduleEvent(ts=self.getExecutionPoint(), ride_id=self._id, origin_node=self.origin_node, destination_node=self.destination_node)
         
         return_dict = {
             "events": [schedule_event], 
@@ -24,9 +24,9 @@ class RequestEvent(Event):
                     "*args": (self._id,), 
                     "**kwargs" : {
                         "uuid": self._id, 
-                        "type": type(self)
+                        "type": type(self), 
+                        "time": self.getExecutionPoint()
                     }
-
                 }
             ]
         }

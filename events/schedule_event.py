@@ -24,7 +24,8 @@ class ScheduleEvent(Event):
                     "*args": (self.ride_id, self.origin_node, self.destination_node), 
                     "**kwargs" : {
                         "uuid": self._id, 
-                        "type": type(self)
+                        "type": type(self), 
+                        "time": self.getExecutionPoint()
                     }
 
                 }

@@ -19,7 +19,8 @@ class PickupEvent(Event):
                     "*args": (self.ride_id, self.bus_id, self.location), 
                     "**kwargs" : {
                         "uuid": self._id, 
-                        "type": type(self)
+                        "type": type(self), 
+                        "time": self.getExecutionPoint()
                     }
 
                 }

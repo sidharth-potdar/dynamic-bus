@@ -17,7 +17,8 @@ class GraphUpdateEvent(Event):
                     "*args": (self.simulation_time,), 
                     "**kwargs" : {
                         "uuid": self._id, 
-                        "type": type(self)
+                        "type": type(self), 
+                        "time": self.getExecutionPoint()
                     }
 
                 }
