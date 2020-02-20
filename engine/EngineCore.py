@@ -51,7 +51,6 @@ class EngineCore(threading.Thread):
 
             self.now = event.getExecutionPoint()
             results = event.execute()
-            print(type(event))
             j += 1
             if "events" in results: 
                 for e in results['events']: 

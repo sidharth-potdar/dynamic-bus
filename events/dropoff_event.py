@@ -19,7 +19,9 @@ class DropoffEvent(Event):
                     "function": "dropoff_event", 
                     "*args" : (self.ride_id, self.bus_id, self.location), 
                     "**kwargs" : {
-                        "event": self,
+                        "uuid": self._id, 
+                        "type": type(self), 
+                        "time": self.getExecutionPoint()
                     }
                 }
             ]
