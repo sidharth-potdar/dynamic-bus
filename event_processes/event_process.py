@@ -20,11 +20,22 @@ class EventProcess(Process):
         self._rides = prob_dist.generateRides()
 
     def run(self):
-        e = GraphUpdateEvent(0, 8)
-        self._comm.send(e)
+        min_hr = None
+        max_hr = None
         for ride in self._rides:
             origin_node, destination_node, start_hr = ride
             event_ts = start_hr + random.random() # randomly pick a time within the hr to start
-            event = RequestEvent(origin_node=origin_node, destination_node=destination_node, ts=event_ts, current_ts=6) # Current ts is 6 because everything is scheduled before starting
+            if min_hr is None: 
+                min_hr = event_ts
+                max_hr = event_ts
+            else: 
+                min_hr = min(min_hr, event_ts)
+                max_hr = max(max_hr, event_ts)
+            event = RequestEvent(origin_node=origin_node, destination_node=destination_node, ts=event_ts) # Current ts is 6 because everything is scheduled before starting
             event.event = self._id
             self._comm.send(event)
+        print("Generated with", min_hr, max_hr)
+        i = 6
+        while i <= 10: 
+            self._comm.send(GraphUpdateEvent(i, i))
+            i += 0.5
