@@ -140,7 +140,7 @@ class SchedulerCore(threading.Thread):
         return min_bus
 
     @classmethod
-    def request_ride(cls, ride_id):
+    def request_ride(cls, ride_id, **kwargs):
         '''
         Initializes ride status for requested ride
         '''
@@ -150,14 +150,13 @@ class SchedulerCore(threading.Thread):
         }
 
     @classmethod
-    def assign_ride(cls, ride_id, origin_node, destination_node):
+    def assign_ride(cls, ride_id, origin_node, destination_node, **kwargs):
         '''
         Given a ride request, assign it to a bus according to scheduler's policy
         Return execution times for pickup and dropoff events
         '''
         # find nearest eligible buses
         nearest_bus = cls.find_nearest_bus(origin_node)
-
         if len(cls.buses[nearest_bus]["rides"]) == 0:
             # if no route planning needed
             total_time, route = cls.graph.find_shortest_path(origin_node, destination_node)
@@ -204,12 +203,12 @@ class SchedulerCore(threading.Thread):
         cls.pass_events(pickup_event, dropoff_event, EndScheduleEvent())
 
     @classmethod 
-    def pickup_event(cls, ride_id, bus_id, location): 
+    def pickup_event(cls, ride_id, bus_id, location, **kwargs): 
         cls.ride_statuses[ride_id]["status"] = "picked up"
         cls.buses[bus_id]["location"] = location 
 
     @classmethod 
-    def dropoff_event(cls, ride_id, bus_id, location): 
+    def dropoff_event(cls, ride_id, bus_id, location, **kwargs): 
         cls.ride_statuses[ride_id]['status'] = 'completed'
         cls.buses[bus_id] = {
             "rides" : {}, 
@@ -226,7 +225,7 @@ class SchedulerCore(threading.Thread):
             cls.scheduler.send(e)
 
     @classmethod
-    def graph_update(cls, requested_timestamp): 
+    def graph_update(cls, requested_timestamp, **kwargs): 
         cls.scheduler.update(requested_timestamp)
 if __name__ == "__main__":
     scheduler = Scheduler()

@@ -3,6 +3,7 @@ import time
 import random
 from events import RequestEvent
 from events import GraphUpdateEvent
+from events import InvalidateEvent
 from distributions import prob_dist
 
 class EventProcess(Process):
@@ -19,6 +20,8 @@ class EventProcess(Process):
         self._rides = prob_dist.generateRides()
 
     def run(self):
+        e = GraphUpdateEvent(0, 8)
+        self._comm.send(e)
         for ride in self._rides:
             origin_node, destination_node, start_hr = ride
             event_ts = start_hr + random.random() # randomly pick a time within the hr to start

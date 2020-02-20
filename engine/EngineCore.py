@@ -24,8 +24,8 @@ class EngineCore(threading.Thread):
         with self._lock:
             for event in events:
                 heapq.heappush(self._queue, (event.getExecutionPoint(), event))
+                self._dict[event.getId()] = event
         # If we can get remove working w/o this, we should
-        self._dict[event.getId()] = event
 
     def getSimulationTime(self):
         return self.now
@@ -35,6 +35,7 @@ class EngineCore(threading.Thread):
         last_time = time.time() 
         i = 0 
         j = 0 
+        time.sleep(1) 
         while True: 
             # pop from heapq
             if (len(self._queue) > 0):
@@ -50,6 +51,7 @@ class EngineCore(threading.Thread):
 
             self.now = event.getExecutionPoint()
             results = event.execute()
+            print(type(event))
             j += 1
             if "events" in results: 
                 for e in results['events']: 
@@ -57,6 +59,8 @@ class EngineCore(threading.Thread):
             if "scheduler_calls" in results: 
                 for call in results['scheduler_calls']:
                     self.engine.send(call)
+            if "ids" in results:
+                self.remove(*results['ids'])
             if type(event) == ScheduleEvent:
                 now = time.time() 
                 if i % 100 == 0: 
@@ -72,8 +76,8 @@ class EngineCore(threading.Thread):
             #TODO more logging
             # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
 
-    def remove(self, *events):
+    def remove(self, *uuids):
         ''' helper method, even though events can atomically
         invalidate themselves '''
-        for event in events:
-            event.invalidate()
+        for eid in uuids:
+            self._dict[eid].invalidate() 

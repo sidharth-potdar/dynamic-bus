@@ -8,13 +8,18 @@ class GraphUpdateEvent(Event):
         '''
         Executes the pickup event
         '''
+        print(self.isValid())
         # print(f"Executing pickup event {self.ride_id} at {self.getExecutionPoint()} on bus {self.bus_id}")
         return_dict = {
             "scheduler_calls": [
                 {
                     "function": "graph_update", 
                     "*args": (self.simulation_time,), 
-                    "**kwargs": {}
+                    "**kwargs" : {
+                        "uuid": self._id, 
+                        "type": type(self)
+                    }
+
                 }
             ]
         }

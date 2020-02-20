@@ -3,8 +3,8 @@ from .pickup_event import PickupEvent
 from .dropoff_event import DropoffEvent
 
 class ScheduleEvent(Event):
-    def __init__(self, ts, current_ts, ride_id, origin_node, destination_node, priority=1):
-        super(ScheduleEvent, self).__init__(ts, current_ts)
+    def __init__(self, ts, ride_id, origin_node, destination_node, priority=1):
+        super(ScheduleEvent, self).__init__(ts)
         self.ride_id = ride_id
         self.origin_node = origin_node
         self.destination_node = destination_node
@@ -22,7 +22,11 @@ class ScheduleEvent(Event):
                 {
                     "function": "assign_ride", 
                     "*args": (self.ride_id, self.origin_node, self.destination_node), 
-                    "**kwargs": {}
+                    "**kwargs" : {
+                        "uuid": self._id, 
+                        "type": type(self)
+                    }
+
                 }
             ]
         }        

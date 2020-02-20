@@ -68,7 +68,7 @@ class GraphUpdater(threading.Thread):
                 for neighbor, weight in edge_entry: 
                     # grab distribution 
                     if not interpolate_req: 
-                        edge_dist = self.graph._dist[(node, neighbor)][requsted_time]
+                        edge_dist = self.GraphObject._dist[(node, neighbor)][requsted_time]
                     else: 
                         edge_dist_1 = self.GraphObject._dist[(node, neighbor)][start]
                         edge_dist_2 = self.GraphObject._dist[(node, neighbor)][end] 

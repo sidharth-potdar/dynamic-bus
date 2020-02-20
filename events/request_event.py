@@ -5,9 +5,7 @@ import time
 
 class RequestEvent(Event):
     def __init__(self, origin_node, destination_node, ts=None, current_ts=None,priority=1):
-        super(RequestEvent, self).__init__(ts=ts, current_ts=current_ts)
-        self.ts = ts
-        self.current_ts = current_ts
+        super(RequestEvent, self).__init__(ts=ts)
         self.origin_node = origin_node
         self.destination_node = destination_node
 
@@ -16,7 +14,7 @@ class RequestEvent(Event):
         Executes the ride request event by calling the scheduler
         '''
         # print(f"Executing ride request event {self._id} at {self.getExecutionPoint()} from {self.origin_node} to {self.destination_node}")
-        schedule_event = ScheduleEvent(ts=self.ts + 5, current_ts=self.ts, ride_id=self._id, origin_node=self.origin_node, destination_node=self.destination_node)
+        schedule_event = ScheduleEvent(ts=0, ride_id=self._id, origin_node=self.origin_node, destination_node=self.destination_node)
         
         return_dict = {
             "events": [schedule_event], 
@@ -24,7 +22,11 @@ class RequestEvent(Event):
                 {
                     "function": "request_ride", 
                     "*args": (self._id,), 
-                    "**kwargs": {} 
+                    "**kwargs" : {
+                        "uuid": self._id, 
+                        "type": type(self)
+                    }
+
                 }
             ]
         }

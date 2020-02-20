@@ -17,7 +17,11 @@ class PickupEvent(Event):
                 {
                     "function": "pickup_event", 
                     "*args": (self.ride_id, self.bus_id, self.location), 
-                    "**kwargs": {}
+                    "**kwargs" : {
+                        "uuid": self._id, 
+                        "type": type(self)
+                    }
+
                 }
             ]
         }
