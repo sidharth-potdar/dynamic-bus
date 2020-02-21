@@ -90,6 +90,10 @@ class SchedulerCore(threading.Thread):
     queue = None
     graph = None
     scheduler = None
+    invalid_events = set()
+    completed_pickups = set()
+    completed_dropoffs = set()
+
     def __init__(self, scheduler):
         super().__init__(name="SchedulerCore")
         self.execution_queue = deque()
@@ -183,12 +187,12 @@ class SchedulerCore(threading.Thread):
             dropoff_time /= 3600
             if dropoff_time < 0:
                 print(f"Negative dropoff time in empty bus: {dropoff_time}")
-            travel_times = { (origin_node, destination_node) : (pickup_time, dropoff_time) }
+            travel_times = { (origin_node, destination_node, ride_id) : (pickup_time, dropoff_time) }
             route = pickup_route + dropoff_route
         else:
             # if more than one ride on bus -> plan route using chosen policy
-            node_pairs = [(pair[0], pair[1]) for pair in cls.buses[nearest_bus]["rides"].values()]
-            node_pairs.append((origin_node, destination_node))
+            node_pairs = [(r_id, pair[0], pair[1]) for r_id, pair in cls.buses[nearest_bus]["rides"].items()]
+            node_pairs.append((ride_id, origin_node, destination_node))
 
             planner = GeneticAlgorithmPlanner(cls.graph, bus_node, node_pairs)
             total_time, route, travel_times = planner.find_optimal_route()
@@ -196,11 +200,14 @@ class SchedulerCore(threading.Thread):
         # invalidate any yet to be executed events on the ride
         ride_ids = cls.buses[nearest_bus]["rides"].keys()
         for r_id in ride_ids:
-            schedule_event_id = cls.ride_statuses[r_id]["schedule_event_id"]
+            # schedule_event_id = cls.ride_statuses[r_id]["schedule_event_id"]
             pickup_event_id = cls.ride_statuses[r_id]["pickup_event_id"]
             dropoff_event_id = cls.ride_statuses[r_id]["dropoff_event_id"]
-            future_event_ids = [schedule_event_id, pickup_event_id, dropoff_event_id]
-            invalidate_event = InvalidateEvent(*[fid for fid in future_event_ids if fid != None])
+            # future_event_ids = [schedule_event_id, pickup_event_id, dropoff_event_id]
+            invalidate_event = InvalidateEvent(pickup_event_id, dropoff_event_id)
+            cls.invalid_events.add(pickup_event_id)
+            cls.invalid_events.add(dropoff_event_id)
+            # print(f"Invalidate ride {r_id} with pickup {pickup_event_id} and dropoff {dropoff_event_id}")
             cls.pass_events(invalidate_event)
 
         # update bus and ride status
@@ -214,18 +221,29 @@ class SchedulerCore(threading.Thread):
 
         # generate pickup and dropoff events
         events = []
-        for (origin, dest), (pickup, dropoff) in travel_times.items():
+        for (origin, dest, r_id), (pickup, dropoff) in travel_times.items():
             pickup_time = current_ts + pickup
             dropoff_time = current_ts + dropoff
             # print("Times: ", current_ts, pickup_time, dropoff_time)
-            pickup_event = PickupEvent(ride_id=ride_id, bus_id=nearest_bus, location=origin, ts=pickup_time)
-            dropoff_event = DropoffEvent(ride_id=ride_id, bus_id=nearest_bus, location=dest, ts=dropoff_time)
+            pickup_event = PickupEvent(ride_id=r_id, bus_id=nearest_bus, location=origin, ts=pickup_time)
+            dropoff_event = DropoffEvent(ride_id=r_id, bus_id=nearest_bus, location=dest, ts=dropoff_time)
             # print(f"Pickup time: {pickup_event.getExecutionPoint()}, Dropoff time: {dropoff_event.getExecutionPoint()}")
+
+            cls.ride_statuses[r_id]["pickup_event_id"] = pickup_event._id
+            cls.ride_statuses[r_id]["dropoff_event_id"] = dropoff_event._id
 
             cls.pass_events(pickup_event, dropoff_event, EndScheduleEvent())
 
     @classmethod
     def pickup_event(cls, ride_id, bus_id, location, **kwargs):
+        if kwargs["uuid"] in cls.invalid_events:
+            # print(f"Invalid event {kwargs['uuid']}")
+            return
+        if (ride_id, bus_id) in cls.completed_pickups:
+            return
+        else:
+            cls.completed_pickups.add((ride_id, bus_id))
+
         cls.ride_statuses[ride_id]["status"] = "picked up"
         cls.ride_statuses[ride_id]["pickup_time"] = kwargs["time"]
         cls.buses[bus_id]["location"] = location
@@ -234,6 +252,14 @@ class SchedulerCore(threading.Thread):
 
     @classmethod
     def dropoff_event(cls, ride_id, bus_id, location, **kwargs):
+        if kwargs["uuid"] in cls.invalid_events:
+            # print(f"Invalid event {kwargs['uuid']}")
+            return
+        if (ride_id, bus_id) in cls.completed_dropoffs:
+            return
+        else:
+            cls.completed_dropoffs.add((ride_id, bus_id))
+
         cls.ride_statuses[ride_id]["status"] = "completed"
         cls.ride_statuses[ride_id]["dropoff_time"] = kwargs["time"]
         cls.buses[bus_id]["location"] = location
@@ -241,14 +267,14 @@ class SchedulerCore(threading.Thread):
             del cls.buses[bus_id]["rides"][ride_id]
         except KeyError:
             print(f"Ride id {ride_id} not found on bus {bus_id}")
-        pickup_time = cls.ride_statuses[ride_id]["schedule_time"]
+        try:
+            pickup_time = cls.ride_statuses[ride_id]["pickup_time"]
+        except:
+            pickup_time = cls.ride_statuses[ride_id]["schedule_time"]
         origin = cls.ride_statuses[ride_id]["origin"]
         dest = cls.ride_statuses[ride_id]["destination"]
-        # print("Schedule: ", schedule_time)
-        # print("Dropoff: ", kwargs["time"])
-        # print(f"Real pickup time: {pickup_time}, Real dropoff time: {kwargs['time']}")
-        # print(f"Total time for ride {ride_id}: {kwargs['time']-pickup_time}, with expected time: {cls.graph.find_shortest_path(origin, dest)[0]/3600}")
-        print(f"Bus {bus_id} dropped off {ride_id} at {kwargs['time']}")
+
+        print(f"Bus {bus_id} dropped off {ride_id} at {kwargs['time']} with travel time {kwargs['time']-pickup_time}")
 
     @classmethod
     def pass_events(cls, *events):

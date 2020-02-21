@@ -19,14 +19,14 @@ class GeneticAlgorithmPlanner(Planner):
         '''
         # set up genes for each destination node, generate starting population
         start_time = time.time()
-        bus_gene = Gene(self.bus_node, self.graph)
+        bus_gene = Gene(ride_id=None, id=self.bus_node, graph=self.graph)
 
         origin_genes = []
         dest_genes = []
-        for pair in self.node_pairs:
+        for ride_id, origin_id, dest_id in self.node_pairs:
             # create a gene for each node in the (origin, destination) pair
-            origin_gene = Gene(id=pair[0], graph=self.graph, origin=None, dest=None)
-            dest_gene = Gene(id=pair[1], graph=self.graph, origin=None, dest=None)
+            origin_gene = Gene(ride_id=ride_id, id=origin_id, graph=self.graph, origin=None, dest=None)
+            dest_gene = Gene(ride_id=ride_id, id=dest_id, graph=self.graph, origin=None, dest=None)
             origin_gene.dest = dest_gene
             dest_gene.origin = origin_gene
 
@@ -39,6 +39,10 @@ class GeneticAlgorithmPlanner(Planner):
 
         while counter < self.num_generations:
             population = evolve(population, self.tourn_size, self.mutation_rate)
+            for i in population.individuals:
+                for x in i.genes:
+                    if x == None:
+                        raise Error("MAYDAY")
             cost = population.get_fittest().travel_cost
 
             if cost < min_cost:
@@ -91,9 +95,11 @@ class GeneticAlgorithmPlanner(Planner):
             # print(times)
             # print(best_route)
             # print(start, origin.id, end, dest.id)
+            if origin.ride_id != dest.ride_id:
+                print("Origin ride id is not equal to dest ride id!")
 
             if start > end:
-                print("BIGGER FUCKUP", start, end)
+                print("BIGGER ISSUE", start, end)
 
             pickup, dropoff = 0.0, 0.0
             for i in range(0, start):
@@ -102,11 +108,11 @@ class GeneticAlgorithmPlanner(Planner):
                 dropoff += times[j]
 
             if pickup > dropoff:
-                print("FUCKUP", pickup, dropoff)
+                print("ISSUE", pickup, dropoff)
 
             # map from (origin, dest) -> (pickup, dropoff) times
             # print(pickup, dropoff)
-            travel_times[(origin.id, dest.id)] = (pickup, dropoff)
+            travel_times[(origin.id, dest.id, origin.ride_id)] = (pickup, dropoff)
             if pickup < 0 or dropoff < 0:
                 print(f"Negative dropoff time in GA: {dropoff}")
                 print(f"Start: {start}, end: {end}")
@@ -117,7 +123,8 @@ class GeneticAlgorithmPlanner(Planner):
 class Gene: # Node
     distances_table = {}
 
-    def __init__(self, id, graph, origin=None, dest=None):
+    def __init__(self, ride_id, id, graph, origin=None, dest=None):
+        self.ride_id = ride_id
         self.id = id
         self.graph = graph
         self.origin = origin
@@ -151,6 +158,9 @@ class Gene: # Node
 
 class Individual:  # Route: possible solution to TSP
     def __init__(self, genes, origin):
+        # for g in genes:
+        #     if g == None:
+        #         print(f"Nonetype gene! {genes}")
         self.genes = genes
         self.origin = origin
         self.__reset_params()
@@ -171,6 +181,8 @@ class Individual:  # Route: possible solution to TSP
         visited_origins = set()
         for i in range(len(self.genes)):
             curr = self.genes[i]
+            # if curr == None:
+                # print(self.genes)
 
             if curr.origin != None and curr.origin not in visited_origins:
                 # print([g.id for g in solution.genes])
@@ -305,10 +317,9 @@ def crossover(parent_1, parent_2):
     fill_with_parent2_genes(child, parent_2)
 
     try:
-        validate(child)
+        child.validate()
         return child
     except:
-        # print("Illegal crossover")
         return parent_1
 
 
