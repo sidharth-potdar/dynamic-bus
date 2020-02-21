@@ -11,6 +11,8 @@ import threading
 import multiprocessing as mp 
 from collections import deque 
 
+from events import NumBusesEvent, BusCapacityEvent
+
 
 class Scheduler(mp.Process): 
     def __init__(self, pipe_recv_from_engine = None, pipe_send_to_engine = None, graph=None, **kwargs): 
@@ -107,7 +109,7 @@ class SchedulerCore(threading.Thread):
                 getattr(SchedulerCore, msg['function'])(*msg['*args'], **msg['**kwargs'])
 
     @classmethod
-    def init(cls, graph, num_buses=2, bus_capacity=5):
+    def init(cls, graph, num_buses=num_buses, bus_capacity=bus_capacity):
         '''
         Initialize the scheduler with given constraints
         '''
@@ -159,6 +161,10 @@ class SchedulerCore(threading.Thread):
         '''
         # find nearest eligible buses
         nearest_bus = cls.find_nearest_bus(origin_node)
+
+        #adhoc to stop crash, delete asap
+        if nearest_bus is None:
+            return
 
         if len(cls.buses[nearest_bus]["rides"]) == 0:
             # if no route planning needed

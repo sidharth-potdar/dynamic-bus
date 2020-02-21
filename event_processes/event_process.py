@@ -4,6 +4,7 @@ import random
 from events import RequestEvent
 from events import GraphUpdateEvent
 from distributions import prob_dist
+from events import NumRidesEvent
 
 class EventProcess(Process):
     def __init__(self, queue, id, graph):
@@ -30,3 +31,5 @@ class EventProcess(Process):
             event = RequestEvent(origin_node=origin_node, destination_node=destination_node, ts=event_ts, current_ts=6) # Current ts is 6 because everything is scheduled before starting
             event.event = self._id
             self._comm.send(event)
+
+        self._comm.send(NumRidesEvent(0,len(self._rides)))

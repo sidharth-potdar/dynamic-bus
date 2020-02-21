@@ -4,7 +4,9 @@ import heapq
 import threading
 import time
 from db_logging import EventLogger
+from events import RequestEvent, ScheduleEvent, PickupEvent, DropoffEvent
 from events import EndEvent
+from events import NumRidesEvent, NumBusesEvent, BusCapacityEvent
 
 class EngineCore(threading.Thread):
     ''' Engine thread executes in background'''
@@ -21,7 +23,12 @@ class EngineCore(threading.Thread):
         #logging.basicConfig(filename='sim.log', filemode='w')
         #self.logger = logging.getLogger()
 
-        self.past_events = []
+        self.start_time = time.time()
+        self.past_requests = []
+        self.past_schedules = []
+        self.past_pickups= []
+        self.past_dropoffs = []
+
 
     def schedule(self, *events):
         with self._lock:
@@ -55,8 +62,25 @@ class EngineCore(threading.Thread):
                 # Here mark invalid event
                 priority, event = heapq.heappop(self._queue)
 
+            if isinstance(event, NumRidesEvent):
+                self.num_rides = event.execute()
+                continue
+            elif isinstance(event, NumBusesEvent):
+                self.num_buses = event.execute()
+                continue
+            elif isinstance(event, BusCapacityEvent):
+                self.bus_capacity = event.execute()
+                continue
+            elif isinstance(event, RequestEvent):
+                self.past_requests.append(str(event))
+            elif isinstance(event, ScheduleEvent):
+                self.past_schedules.append(str(event))
+            elif isinstance(event, PickupEvent):
+                self.past_pickups.append(str(event))
+            elif isinstance(event, DropoffEvent):
+                self.past_dropoffs.append(str(event)) 
+
             self.now = event.getExecutionPoint()
-            self.past_events.append(event)
             results = event.execute()
             if "events" in results:
                 for e in results['events']:
@@ -67,9 +91,12 @@ class EngineCore(threading.Thread):
             #TODO more logging
             # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
             if isinstance(event, EndEvent):
-            	el = EventLogger()
-            	el.log_events(past_events)
-            	break
+                end_time = time.time()
+                print("ENDING HERE")
+                el = EventLogger()
+                sim_tup = (self.num_rides, self.num_buses, self.bus_capacity, end_time - self.start_time)
+                el.log(sim_tup, self.past_requests, self.past_schedules, self.past_pickups, self.past_dropoffs)
+                break
 
 
     def remove(self, *events):

@@ -5,3 +5,4 @@ from .pickup_event import PickupEvent
 from .dropoff_event import DropoffEvent
 from .graph_update_event import GraphUpdateEvent
 from .end_event import EndEvent
+from .info_event import NumRidesEvent, NumBusesEvent, BusCapacityEvent

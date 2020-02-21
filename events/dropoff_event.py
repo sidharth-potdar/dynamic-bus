@@ -7,6 +7,9 @@ class DropoffEvent(Event):
         self.bus_id = bus_id
         self.location = location
 
+        self.ts = ts
+        self.priority = priority
+
     def execute(self):
         '''
         Executes the dropoff event
@@ -25,4 +28,4 @@ class DropoffEvent(Event):
         return return_dict
 
     def __repr__(self):
-        return f"(0,{self.getId()},0,{self.ts},{self.current_ts},{self.location},{self.priority},{self.bus_id})"
+        return f"(0,{self.getId()},{self.ts},{self.location},{self.priority},{self.bus_id})"
