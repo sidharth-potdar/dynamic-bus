@@ -25,6 +25,7 @@ class EngineCore(threading.Thread):
             for event in events:
                 heapq.heappush(self._queue, (event.getExecutionPoint(), event))
                 self._dict[event.getId()] = event
+                 
         # If we can get remove working w/o this, we should
 
     def getSimulationTime(self):

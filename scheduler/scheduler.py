@@ -200,9 +200,8 @@ class SchedulerCore(threading.Thread):
             pickup_event_id = cls.ride_statuses[r_id]["pickup_event_id"]
             dropoff_event_id = cls.ride_statuses[r_id]["dropoff_event_id"]
             future_event_ids = [schedule_event_id, pickup_event_id, dropoff_event_id]
-            invalidate_event = InvalidateEvent([fid for fid in future_event_ids if fid != None])
-            print(invalidate_event)
-            cls.pass_events(InvalidateEvent)
+            invalidate_event = InvalidateEvent(*[fid for fid in future_event_ids if fid != None])
+            cls.pass_events(invalidate_event)
 
         # update bus and ride status
         cls.buses[nearest_bus]["rides"][ride_id] = (origin_node, destination_node)
