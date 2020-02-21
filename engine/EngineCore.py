@@ -3,7 +3,7 @@ import random
 import heapq
 import threading
 import time
-from events import ScheduleEvent
+from events import ScheduleEvent, EndScheduleEvent
 
 class EngineCore(threading.Thread):
     ''' Engine thread executes in background'''
@@ -37,11 +37,20 @@ class EngineCore(threading.Thread):
         i = 0
         j = 0
         time.sleep(1)
-        while True:
+        end = False 
+        last_seen = time.time() 
+        while not end:
             # pop from heapq
             if (len(self._queue) > 0):
+                self.engine.send_heartbeat = True 
+                last_seen = time.time() 
                 with self._lock:
                     priority, event = heapq.heappop(self._queue)
+            elif time.time() - last_seen > 5: 
+                self.engine.send_heartbeat = False 
+                if not self.engine.heartbeat: 
+                    end = True
+                continue 
             else:
                 continue
             while not event.isValid():
@@ -49,7 +58,6 @@ class EngineCore(threading.Thread):
                 # self.logger.info("%s %s marked as invalid." % (event.__class__, event.getId()))
                 # Here mark invalid event
                 priority, event = heapq.heappop(self._queue)
-
             self.now = event.getExecutionPoint()
             results = event.execute()
             j += 1
@@ -70,12 +78,11 @@ class EngineCore(threading.Thread):
                     last_time = time.time()
                 self.engine.scheduleSemaphore.acquire()
                 i += 1
-
                 # print("Slept for", time.time() - now, "seconds")
                 # floors speed to 60x real life
             #TODO more logging
             # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
-
+        print("Engine Core Terminating")
     def remove(self, *uuids):
         ''' helper method, even though events can atomically
         invalidate themselves '''
