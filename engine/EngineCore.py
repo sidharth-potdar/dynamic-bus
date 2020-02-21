@@ -72,13 +72,13 @@ class EngineCore(threading.Thread):
                 self.bus_capacity = event.execute()
                 continue
             elif isinstance(event, RequestEvent):
-                self.past_requests.append(str(event))
+                self.past_requests.append(repr(event))
             elif isinstance(event, ScheduleEvent):
-                self.past_schedules.append(str(event))
+                self.past_schedules.append(repr(event))
             elif isinstance(event, PickupEvent):
-                self.past_pickups.append(str(event))
+                self.past_pickups.append(repr(event))
             elif isinstance(event, DropoffEvent):
-                self.past_dropoffs.append(str(event)) 
+                self.past_dropoffs.append(repr(event)) 
 
             self.now = event.getExecutionPoint()
             results = event.execute()

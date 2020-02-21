@@ -240,3 +240,6 @@ class SchedulerCore(threading.Thread):
 if __name__ == "__main__":
     scheduler = Scheduler()
     scheduler.init()
+    numbev = NumBusesEvent(0,scheduler.num_buses)
+    capev = BusCapacityEvent(0, scheduler.bus_capacity)
+    SchedulerCore.pass_events([numbev, capev])
