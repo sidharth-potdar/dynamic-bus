@@ -5,7 +5,7 @@ import sys
 
 from scheduler.graph import Graph
 from scheduler.graph import GraphUpdater
-from events import PickupEvent, DropoffEvent, EndScheduleEvent
+from events import PickupEvent, DropoffEvent, EndScheduleEvent, InvalidateEvent
 from planners import GeneticAlgorithmPlanner
 import threading
 import multiprocessing as mp
@@ -106,7 +106,7 @@ class SchedulerCore(threading.Thread):
                 getattr(SchedulerCore, msg['function'])(*msg['*args'], **msg['**kwargs'])
 
     @classmethod
-    def init(cls, graph, num_buses=50, bus_capacity=4):
+    def init(cls, graph, num_buses=100, bus_capacity=4):
         '''
         Initialize the scheduler with given constraints
         '''
@@ -148,9 +148,14 @@ class SchedulerCore(threading.Thread):
         cls.ride_statuses[ride_id] = {
             "status": "requested",
             "bus": None,
+            "origin": None,
+            "destination": None,
             "schedule_time": None,
+            "schedule_event_id": None,
             "pickup_time": None,
-            "dropoff_time": None
+            "pickup_event_id": None,
+            "dropoff_time": None,
+            "dropoff_event_id": None,
         }
 
     @classmethod
@@ -186,8 +191,18 @@ class SchedulerCore(threading.Thread):
             node_pairs.append((origin_node, destination_node))
 
             planner = GeneticAlgorithmPlanner(cls.graph, bus_node, node_pairs)
-            print(ride_id)
             total_time, route, travel_times = planner.find_optimal_route()
+
+        # invalidate any yet to be executed events on the ride
+        ride_ids = cls.buses[nearest_bus]["rides"].keys()
+        for r_id in ride_ids:
+            schedule_event_id = cls.ride_statuses[r_id]["schedule_event_id"]
+            pickup_event_id = cls.ride_statuses[r_id]["pickup_event_id"]
+            dropoff_event_id = cls.ride_statuses[r_id]["dropoff_event_id"]
+            future_event_ids = [schedule_event_id, pickup_event_id, dropoff_event_id]
+            invalidate_event = InvalidateEvent([fid for fid in future_event_ids if fid != None])
+            print(invalidate_event)
+            cls.pass_events(InvalidateEvent)
 
         # update bus and ride status
         cls.buses[nearest_bus]["rides"][ride_id] = (origin_node, destination_node)
@@ -195,6 +210,8 @@ class SchedulerCore(threading.Thread):
         cls.ride_statuses[ride_id]["status"] = "scheduled"
         cls.ride_statuses[ride_id]["bus"] = nearest_bus
         cls.ride_statuses[ride_id]["schedule_time"] = current_ts
+        cls.ride_statuses[ride_id]["origin"] = origin_node
+        cls.ride_statuses[ride_id]["destination"] = destination_node
 
         # generate pickup and dropoff events
         events = []
@@ -204,15 +221,17 @@ class SchedulerCore(threading.Thread):
             # print("Times: ", current_ts, pickup_time, dropoff_time)
             pickup_event = PickupEvent(ride_id=ride_id, bus_id=nearest_bus, location=origin, ts=pickup_time)
             dropoff_event = DropoffEvent(ride_id=ride_id, bus_id=nearest_bus, location=dest, ts=dropoff_time)
-            events.extend((pickup_event, dropoff_event))
-        events.append(EndScheduleEvent())
-        cls.pass_events([e for e in events])
+            # print(f"Pickup time: {pickup_event.getExecutionPoint()}, Dropoff time: {dropoff_event.getExecutionPoint()}")
+
+            cls.pass_events(pickup_event, dropoff_event, EndScheduleEvent())
 
     @classmethod
     def pickup_event(cls, ride_id, bus_id, location, **kwargs):
         cls.ride_statuses[ride_id]["status"] = "picked up"
         cls.ride_statuses[ride_id]["pickup_time"] = kwargs["time"]
         cls.buses[bus_id]["location"] = location
+
+        print(f"Bus {bus_id} picked up {ride_id} at {kwargs['time']}")
 
     @classmethod
     def dropoff_event(cls, ride_id, bus_id, location, **kwargs):
@@ -223,13 +242,17 @@ class SchedulerCore(threading.Thread):
             del cls.buses[bus_id]["rides"][ride_id]
         except KeyError:
             print(f"Ride id {ride_id} not found on bus {bus_id}")
-        schedule_time = cls.ride_statuses[ride_id]["schedule_time"]
+        pickup_time = cls.ride_statuses[ride_id]["schedule_time"]
+        origin = cls.ride_statuses[ride_id]["origin"]
+        dest = cls.ride_statuses[ride_id]["destination"]
         # print("Schedule: ", schedule_time)
         # print("Dropoff: ", kwargs["time"])
-        print(f"Total time for ride {ride_id}: {kwargs['time']-schedule_time}")
+        # print(f"Real pickup time: {pickup_time}, Real dropoff time: {kwargs['time']}")
+        # print(f"Total time for ride {ride_id}: {kwargs['time']-pickup_time}, with expected time: {cls.graph.find_shortest_path(origin, dest)[0]/3600}")
+        print(f"Bus {bus_id} dropped off {ride_id} at {kwargs['time']}")
 
     @classmethod
-    def pass_events(cls, events):
+    def pass_events(cls, *events):
         '''
         Passes given event objects back to multiprocessing queue for engine to execute
         '''

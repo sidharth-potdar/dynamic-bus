@@ -1,7 +1,7 @@
 from .event import Event
 
 class PickupEvent(Event):
-    def __init__(self, ts, ride_id, bus_id, location, priority=1):
+    def __init__(self, ts, ride_id, bus_id, location):
         super(PickupEvent, self).__init__(ts)
         self.ride_id = ride_id
         self.bus_id = bus_id
@@ -15,11 +15,11 @@ class PickupEvent(Event):
         return_dict = {
             "scheduler_calls": [
                 {
-                    "function": "pickup_event", 
-                    "*args": (self.ride_id, self.bus_id, self.location), 
+                    "function": "pickup_event",
+                    "*args": (self.ride_id, self.bus_id, self.location),
                     "**kwargs" : {
-                        "uuid": self._id, 
-                        "type": type(self), 
+                        "uuid": self._id,
+                        "type": type(self),
                         "time": self.getExecutionPoint()
                     }
 

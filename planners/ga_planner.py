@@ -1,6 +1,7 @@
 from .planner import Planner
 
 from random import random, randint, sample
+from itertools import product
 import time
 
 class GeneticAlgorithmPlanner(Planner):
@@ -58,31 +59,57 @@ class GeneticAlgorithmPlanner(Planner):
 
         best_fittest.validate()
 
+        positions = {}
+        x = []
+        for i, gene in enumerate(best_fittest.genes):
+            if gene.origin == None:
+                # for j, other in enumerate(best_fittest.genes):
+                #     if gene.dest == other:
+                #         positions[(gene.id, gene.dest.id)] = (i, j)
+                #         break
+                x.append((gene, gene.dest))
+
+        # for pair in x:
+        #     i = best_fittest.genes.index(pair[0])
+        #     j = best_fittest.genes.index(pair[1])
+        #     positions[(pair[0], pair[1])] = (i, j)
+
         # determine how long each pickup & dropoff will take
         times = [None for _ in range(len(best_route))]
-        positions = {}
         travel_times = {}
         curr = bus_gene
         for i, gene in enumerate(best_fittest.genes):
             # divide by 3600 to convert from seconds to hours
             times[i] = curr.get_distance_to(gene) / 3600
-            if gene.id not in positions:
-                positions[gene.id] = i
             curr = gene
 
-        print(best_route)
-        print(times)
-        print(positions)
+        for origin, dest in x:
+            # start, end = positions[(origin, dest)]
+            start = best_fittest.genes.index(origin)
+            end = best_fittest.genes.index(dest)
+            # print(len(x))
+            # print(times)
+            # print(best_route)
+            # print(start, origin.id, end, dest.id)
 
-        for origin, dest in self.node_pairs:
-            start = positions[origin]
-            end = positions[dest]
-            dt = times[end] - times[start]
+            if start > end:
+                print("BIGGER FUCKUP", start, end)
+
+            pickup, dropoff = 0.0, 0.0
+            for i in range(0, start):
+                pickup += times[i]
+            for j in range(0, end+1):
+                dropoff += times[j]
+
+            if pickup > dropoff:
+                print("FUCKUP", pickup, dropoff)
+
             # map from (origin, dest) -> (pickup, dropoff) times
-            travel_times[(origin, dest)] = (times[start], dt)
-            if dt < 0:
-                print(f"Negative dropoff time in GA: {dt}")
-        print()
+            # print(pickup, dropoff)
+            travel_times[(origin.id, dest.id)] = (pickup, dropoff)
+            if pickup < 0 or dropoff < 0:
+                print(f"Negative dropoff time in GA: {dropoff}")
+                print(f"Start: {start}, end: {end}")
         return best_fittest.travel_cost, best_route, travel_times
 
 
@@ -102,7 +129,12 @@ class Gene: # Node
     def __eq__(self, other):
         if other == None:
             return False
-        return self.id == other.id
+        if self.id == other.id:
+            if self.origin != None and other.origin != None:
+                return self.origin.id == other.origin.id and self.dest == other.dest
+            elif self.dest != None and other.dest != None:
+                return self.dest.id == other.dest.id and self.origin == other.origin
+        return False
 
     def get_distance_to(self, dest):
         key = (self.id, dest.id)

@@ -1,13 +1,12 @@
 from .event import Event
 
-class InvalidateEvent(Event): 
-    def __init__(self, *UUIDs): 
+class InvalidateEvent(Event):
+    def __init__(self, *UUIDs):
         super().__init__(ts=0)
-        self.ids = UUIDs 
+        self.ids = UUIDs
 
-    
-    def execute(self): 
-        super().execute()
+
+    def execute(self):
         return {
             "ids": self.ids
         }

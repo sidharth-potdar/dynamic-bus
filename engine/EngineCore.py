@@ -2,7 +2,7 @@ import logging
 import random
 import heapq
 import threading
-import time 
+import time
 from events import ScheduleEvent
 
 class EngineCore(threading.Thread):
@@ -32,17 +32,17 @@ class EngineCore(threading.Thread):
 
     def run(self):
         print("Engine Booting")
-        last_time = time.time() 
-        i = 0 
-        j = 0 
-        time.sleep(1) 
-        while True: 
+        last_time = time.time()
+        i = 0
+        j = 0
+        time.sleep(1)
+        while True:
             # pop from heapq
             if (len(self._queue) > 0):
                 with self._lock:
                     priority, event = heapq.heappop(self._queue)
-            else: 
-                continue 
+            else:
+                continue
             while not event.isValid():
                 # TODO - some sort of logging
                 # self.logger.info("%s %s marked as invalid." % (event.__class__, event.getId()))
@@ -52,26 +52,26 @@ class EngineCore(threading.Thread):
             self.now = event.getExecutionPoint()
             results = event.execute()
             j += 1
-            if "events" in results: 
-                for e in results['events']: 
-                    self.schedule(e) 
-            if "scheduler_calls" in results: 
+            if "events" in results:
+                for e in results['events']:
+                    self.schedule(e)
+            if "scheduler_calls" in results:
                 for call in results['scheduler_calls']:
                     self.engine.send(call)
             if "ids" in results:
                 self.remove(*results['ids'])
             if type(event) == ScheduleEvent:
-                now = time.time() 
-                if i % 100 == 0: 
+                now = time.time()
+                if i % 100 == 0:
                     print(f"Executing {i} schedule events in", time.time() - last_time, ";", j, "other events executed")
-                    i = 0 
+                    i = 0
                     j = 0
-                    last_time = time.time() 
-                self.engine.scheduleSemaphore.acquire() 
+                    last_time = time.time()
+                self.engine.scheduleSemaphore.acquire()
                 i += 1
 
-                # print("Slept for", time.time() - now, "seconds") 
-                # floors speed to 60x real life 
+                # print("Slept for", time.time() - now, "seconds")
+                # floors speed to 60x real life
             #TODO more logging
             # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
 
@@ -79,4 +79,4 @@ class EngineCore(threading.Thread):
         ''' helper method, even though events can atomically
         invalidate themselves '''
         for eid in uuids:
-            self._dict[eid].invalidate() 
+            self._dict[eid].invalidate()
