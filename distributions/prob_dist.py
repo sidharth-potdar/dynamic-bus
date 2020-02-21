@@ -1,7 +1,7 @@
 import random
 import csv
 
-def generateRides(multiplier=10):
+def generateRides(multiplier=1):
     with open('distributions/ride_volume.csv','r') as ridef:
         ride_reader = csv.reader(ridef)
         next(ride_reader) # IGNORE HEADER
