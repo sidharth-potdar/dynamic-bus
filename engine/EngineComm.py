@@ -1,7 +1,7 @@
 import threading
 from collections import deque
 from events import EndScheduleEvent
-
+import time 
 class EngineComm(threading.Thread):
     MAX_LOOP_SENDS = 10
     def __init__(self, engine, daemon=None): 
@@ -11,15 +11,30 @@ class EngineComm(threading.Thread):
         self.schedule_send_comm = self.engine.getScheduleSendComm() 
         self.eventgen_comm = self.engine.getEventgenComm() 
         self.send_buffer = deque()
-
+        self.on = True 
     def run(self): 
-        while True: 
+        # Keep track of our heartbeat time
+        last_heartbeat_time = time.time() 
+        # keep track of last engine heartbeat signal
+        last_schedule_heartbeat = time.time() 
+        while self.on: 
             if self.schedule_recv_comm.poll(): 
                 res = self.schedule_recv_comm.recv() 
-                if type(res) == EndScheduleEvent: 
+                if res == "heartbeat": 
+                    self.engine.heartbeat = True 
+                    last_schedule_heartbeat = time.time() 
+                elif type(res) == EndScheduleEvent: 
                     self.engine.scheduleSemaphore.release() 
                 else: 
                     self.engine.schedule(res) 
+            
+            if time.time() - last_heartbeat_time > 1 and self.engine.send_heartbeat: 
+                self.schedule_send_comm.send("heartbeat")
+                last_heartbeat_time = time.time() 
+
+            if time.time() - last_schedule_heartbeat > 5: 
+                self.engine.heartbeat = False 
+
             if self.eventgen_comm.poll(): 
                 self.engine.schedule(self.eventgen_comm.recv())
 

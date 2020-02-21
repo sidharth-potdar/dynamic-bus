@@ -18,7 +18,8 @@ class Engine(mp.Process):
         self.core = EngineCore(self, **kwargs)
         self.time = 0 
         self.scheduleSemaphore = threading.Semaphore(0) 
-
+        self.send_heartbeat = True 
+        self.heartbeat = True 
 
     def getScheduleSendComm(self): 
         return self.to_scheduler

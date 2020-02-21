@@ -68,4 +68,6 @@ class Event:
             return False 
 
     def __eq__(self, other): 
+        if type(other) != type(self): 
+            return False 
         return self._execute_at == other._execute_at and self._scheduled_ts == other._scheduled_ts

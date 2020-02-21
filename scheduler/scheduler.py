@@ -32,6 +32,8 @@ class Scheduler(mp.Process):
         self._graph_updater = GraphUpdater(self.graph, self._graph_lock)
 
         # Start Threads
+        self.heartbeat = True 
+        self.send_heartbeat = True 
 
         self.execution_queue = deque()
 
@@ -63,21 +65,45 @@ class SchedulerComm(threading.Thread):
         self.engine_recv_comm = self.scheduler.getEngineRecvComm()
         self.engine_send_comm = self.scheduler.getEngineSendComm()
         self.send_buffer = deque()
-
+        self.on = True 
     def format_msg(self, msg):
         return msg["function"] + "(" + ", ".join(map(str, msg['*args'])) + ")"
 
     def run(self):
-        while True:
+        # Keep track of our heartbeat time
+        last_heartbeat_time = time.time() 
+        # keep track of last engine heartbeat signal
+        last_engine_heartbeat = time.time() 
+        while self.on:
             if self.engine_recv_comm.poll():
                 # add to execution queue
-                msg = self.engine_recv_comm.recv();
-                self.scheduler.execute(msg)
+                msg = self.engine_recv_comm.recv()
+
+                # if we receive a haeatbeat message, 
+                if msg == "heartbeat": 
+                    # make sure we still have it and update the last seen. 
+                    self.scheduler.heartbeat = True 
+                    last_engine_heartbeat = time.time() 
+                else: 
+                    self.scheduler.execute(msg)
+            # if we haven't sent a heartbeat in a while and we're supposed to: 
+            if time.time() - last_heartbeat_time > 1 and self.scheduler.send_heartbeat: 
+                # send one over.
+                last_heartbeat_time = time.time()
+                self.engine_send_comm.send("heartbeat")
+            
+            #send other things we might have to send. 
             if len(self.send_buffer) > 0:
                 i = 0
                 while len(self.send_buffer) > 0 and i < SchedulerComm.MAX_LOOP_SENDS:
                     self.engine_send_comm.send(self.send_buffer.popleft())
                     i += 1
+
+            # if we haven't seen the engine in a while... 
+            if time.time() - last_engine_heartbeat > 5: 
+                # mark that we don't have a heartbeat. 
+                self.scheduler.heartbeat = False 
+
     def send(self, msg):
         self.send_buffer.append(msg)
 
@@ -90,20 +116,34 @@ class SchedulerCore(threading.Thread):
     queue = None
     graph = None
     scheduler = None
+    instance = None
     def __init__(self, scheduler):
         super().__init__(name="SchedulerCore")
         self.execution_queue = deque()
         self._scheduler = scheduler
+        self.running = True 
         SchedulerCore.scheduler = self._scheduler
 
     def execute(self, msg):
         self.execution_queue.append(msg)
-
+        
     def run(self):
-        while True:
+        SchedulerCore.instance = self 
+        last_seen = time.time() 
+        while self.running:
             if len(self.execution_queue) > 0:
+                self.scheduler.send_heartbeat = True 
                 msg = self.execution_queue.popleft()
                 getattr(SchedulerCore, msg['function'])(*msg['*args'], **msg['**kwargs'])
+                last_seen = time.time()
+            # if we've been sitting idle for a while, 
+            elif time.time() - last_seen > 5: 
+                # turn off our heartbeat 
+                self.scheduler.send_heartbeat = False 
+                # if we haven't seen a heartbeat either, turn off. 
+                if not self.scheduler.heartbeat: 
+                    self.running = False 
+        print("Scheduler Shut Down")
 
     @classmethod
     def init(cls, graph, num_buses=100, bus_capacity=4):
@@ -170,7 +210,7 @@ class SchedulerCore(threading.Thread):
 
         if nearest_bus is None:
             # TODO: implement logic for no available bus
-            print("Out of buses! Please implement solution")
+            # print("Out of buses! Please implement solution")
             return
 
         bus_node = cls.buses[nearest_bus]["location"]
@@ -200,7 +240,8 @@ class SchedulerCore(threading.Thread):
             pickup_event_id = cls.ride_statuses[r_id]["pickup_event_id"]
             dropoff_event_id = cls.ride_statuses[r_id]["dropoff_event_id"]
             future_event_ids = [schedule_event_id, pickup_event_id, dropoff_event_id]
-            invalidate_event = InvalidateEvent(*[fid for fid in future_event_ids if fid != None])
+            ids = [fid for fid in future_event_ids if fid != None]
+            invalidate_event = InvalidateEvent(*ids)
             cls.pass_events(invalidate_event)
 
         # update bus and ride status
