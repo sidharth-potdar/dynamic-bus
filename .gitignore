@@ -13,3 +13,6 @@ data/
 
 # Macs 
 .DS_Store
+
+#log db
+simlog.db
