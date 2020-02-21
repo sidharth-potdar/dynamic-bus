@@ -7,79 +7,79 @@ from scheduler.graph import Graph
 from scheduler.graph import GraphUpdater
 from events import PickupEvent, DropoffEvent, EndScheduleEvent
 from planners import GeneticAlgorithmPlanner
-import threading 
-import multiprocessing as mp 
-from collections import deque 
+import threading
+import multiprocessing as mp
+from collections import deque
 
 
-class Scheduler(mp.Process): 
-    def __init__(self, pipe_recv_from_engine = None, pipe_send_to_engine = None, graph=None, **kwargs): 
-        super().__init__() 
-        # Initiate Pipes 
+class Scheduler(mp.Process):
+    def __init__(self, pipe_recv_from_engine = None, pipe_send_to_engine = None, graph=None, **kwargs):
+        super().__init__()
+        # Initiate Pipes
         self.to_engine = pipe_send_to_engine
-        self.from_engine = pipe_recv_from_engine 
+        self.from_engine = pipe_recv_from_engine
         # Initialize Communication and Core
-        self.comm = SchedulerComm(self, daemon=True) 
+        self.comm = SchedulerComm(self, daemon=True)
         self.core = SchedulerCore(self)
         SchedulerCore.init(graph)
 
-        # Setup Graph 
-        self.graph = graph 
-        ## Setup Graph Lock 
+        # Setup Graph
+        self.graph = graph
+        ## Setup Graph Lock
         self._graph_lock = threading.Lock()
         self.graph.init_multicore(self._graph_lock)
-        ## setup updater 
+        ## setup updater
         self._graph_updater = GraphUpdater(self.graph, self._graph_lock)
 
-        # Start Threads 
+        # Start Threads
 
-        self.execution_queue = deque() 
+        self.execution_queue = deque()
 
-    def send(self, msg): 
+    def send(self, msg):
         self.comm.send(msg)
 
-    def execute(self, msg): 
+    def execute(self, msg):
         self.core.execute(msg)
 
-    def run(self): 
-        self.comm.start() 
-        self.core.start() 
+    def run(self):
+        self.comm.start()
+        self.core.start()
         self._graph_updater.start()
         self.core.join()
-    
-    def update(self, timestamp): 
+
+    def update(self, timestamp):
         self._graph_updater.request_update(timestamp)
 
-    def getEngineRecvComm(self): 
+    def getEngineRecvComm(self):
         return self.from_engine
-    def getEngineSendComm(self): 
+    def getEngineSendComm(self):
         return self.to_engine
 
-class SchedulerComm(threading.Thread): 
-    MAX_LOOP_SENDS = 10 
-    def __init__(self, scheduler, daemon=None): 
-        super().__init__(daemon=daemon, name="SchedulerComm") 
+class SchedulerComm(threading.Thread):
+    MAX_LOOP_SENDS = 10
+    def __init__(self, scheduler, daemon=None):
+        super().__init__(daemon=daemon, name="SchedulerComm")
         self.scheduler = scheduler
-        self.engine_recv_comm = self.scheduler.getEngineRecvComm() 
+        self.engine_recv_comm = self.scheduler.getEngineRecvComm()
         self.engine_send_comm = self.scheduler.getEngineSendComm()
-        self.send_buffer = deque() 
+        self.send_buffer = deque()
 
-    def format_msg(self, msg): 
+    def format_msg(self, msg):
         return msg["function"] + "(" + ", ".join(map(str, msg['*args'])) + ")"
 
-    def run(self): 
-        while True: 
-            if self.engine_recv_comm.poll(): 
-                # add to execution queue 
-                msg = self.engine_recv_comm.recv(); 
+    def run(self):
+        while True:
+            if self.engine_recv_comm.poll():
+                # add to execution queue
+                msg = self.engine_recv_comm.recv();
                 self.scheduler.execute(msg)
-            if len(self.send_buffer) > 0: 
-                i = 0 
-                while len(self.send_buffer) > 0 and i < SchedulerComm.MAX_LOOP_SENDS: 
-                    self.engine_send_comm.send(self.send_buffer.popleft())  
+            if len(self.send_buffer) > 0:
+                i = 0
+                while len(self.send_buffer) > 0 and i < SchedulerComm.MAX_LOOP_SENDS:
+                    self.engine_send_comm.send(self.send_buffer.popleft())
                     i += 1
-    def send(self, msg): 
-        self.send_buffer.append(msg) 
+    def send(self, msg):
+        self.send_buffer.append(msg)
 
 class SchedulerCore(threading.Thread):
     num_buses = 2
@@ -90,22 +90,23 @@ class SchedulerCore(threading.Thread):
     queue = None
     graph = None
     scheduler = None
-    def __init__(self, scheduler): 
+    def __init__(self, scheduler):
         super().__init__(name="SchedulerCore")
-        self.execution_queue = deque() 
+        self.execution_queue = deque()
         self._scheduler = scheduler
         SchedulerCore.scheduler = self._scheduler
 
-    def execute(self, msg): 
-        self.execution_queue.append(msg) 
+    def execute(self, msg):
+        self.execution_queue.append(msg)
 
-    def run(self): 
-        while True: 
-            if len(self.execution_queue) > 0: 
-                msg = self.execution_queue.popleft() 
+    def run(self):
+        while True:
+            if len(self.execution_queue) > 0:
+                msg = self.execution_queue.popleft()
                 getattr(SchedulerCore, msg['function'])(*msg['*args'], **msg['**kwargs'])
+
     @classmethod
-    def init(cls, graph, num_buses=2, bus_capacity=5):
+    def init(cls, graph, num_buses=50, bus_capacity=4):
         '''
         Initialize the scheduler with given constraints
         '''
@@ -146,7 +147,10 @@ class SchedulerCore(threading.Thread):
         '''
         cls.ride_statuses[ride_id] = {
             "status": "requested",
-            "bus": None
+            "bus": None,
+            "schedule_time": None,
+            "pickup_time": None,
+            "dropoff_time": None
         }
 
     @classmethod
@@ -157,67 +161,75 @@ class SchedulerCore(threading.Thread):
         '''
         # find nearest eligible buses
         nearest_bus = cls.find_nearest_bus(origin_node)
+        current_ts = kwargs["time"]
+
+        if nearest_bus is None:
+            # TODO: implement logic for no available bus
+            print("Out of buses! Please implement solution")
+            return
+
+        bus_node = cls.buses[nearest_bus]["location"]
+
         if len(cls.buses[nearest_bus]["rides"]) == 0:
             # if no route planning needed
-            total_time, route = cls.graph.find_shortest_path(origin_node, destination_node)
+            pickup_time, pickup_route = cls.graph.find_shortest_path(bus_node, origin_node)
+            dropoff_time, dropoff_route = cls.graph.find_shortest_path(origin_node, destination_node)
+            pickup_time /= 3600
+            dropoff_time /= 3600
+            if dropoff_time < 0:
+                print(f"Negative dropoff time in empty bus: {dropoff_time}")
+            travel_times = { (origin_node, destination_node) : (pickup_time, dropoff_time) }
+            route = pickup_route + dropoff_route
         else:
             # if more than one ride on bus -> plan route using chosen policy
-            bus_origin_node = cls.buses[nearest_bus]["location"]
-            ride_origin_nodes = [x[0] for ride_id, x in cls.buses[nearest_bus]["rides"].items()]
-            ride_dest_nodes = [x[1] for ride_id, x in cls.buses[nearest_bus]["rides"].items()]
-            planner = GeneticAlgorithmPlanner(cls.graph, bus_origin_node, ride_origin_nodes + ride_dest_nodes + [destination_node]) 
-            total_time, route = planner.find_optimal_route()
+            node_pairs = [(pair[0], pair[1]) for pair in cls.buses[nearest_bus]["rides"].values()]
+            node_pairs.append((origin_node, destination_node))
 
+            planner = GeneticAlgorithmPlanner(cls.graph, bus_node, node_pairs)
+            print(ride_id)
+            total_time, route, travel_times = planner.find_optimal_route()
+
+        # update bus and ride status
         cls.buses[nearest_bus]["rides"][ride_id] = (origin_node, destination_node)
         cls.buses[nearest_bus]["route"] = route
         cls.ride_statuses[ride_id]["status"] = "scheduled"
+        cls.ride_statuses[ride_id]["bus"] = nearest_bus
+        cls.ride_statuses[ride_id]["schedule_time"] = current_ts
 
-        # random.shuffle(route)
-        # planner = GeneticAlgorithmPlanner(cls.graph, origin_node, route[0:5])
-        # t, r = planner.find_optimal_route()
-        #
-        # curr = origin_node
-        # real_time = 0
-        # for n in route[0:5]:
-        #     real_time += cls.graph.find_shortest_path(curr, n)[0]
-        #     curr = n
-        # print("Route: ", route[0:5])
-        # print("Randomized route time: ", real_time)
-        # sys.exit()
-
-        # calculate time and routes for bus to get to origin, and from origin to destination
-        time_to_origin, start_route = cls.graph.find_shortest_path(cls.buses[nearest_bus]["location"], origin_node)
-        time_to_destination, route = cls.graph.find_shortest_path(origin_node, destination_node)
-
-        # update bus with new ride and route
-        cls.buses[nearest_bus]["route"] = [x for x in start_route] + [y for y in route]
-
-        cls.ride_statuses[ride_id]["status"] = "scheduled"
-
-        time_to_pickup = time.time() + time_to_origin
-        time_to_dropoff = time_to_pickup + time_to_destination
-
-        pickup_event = PickupEvent(ts=time_to_pickup, ride_id=ride_id, bus_id=nearest_bus, location=origin_node)
-        dropoff_event = DropoffEvent(ts=time_to_dropoff, ride_id=ride_id, bus_id=nearest_bus, location=destination_node)
-
-        cls.pass_events(pickup_event, dropoff_event, EndScheduleEvent())
-
-    @classmethod 
-    def pickup_event(cls, ride_id, bus_id, location, **kwargs): 
-        cls.ride_statuses[ride_id]["status"] = "picked up"
-        cls.buses[bus_id]["location"] = location 
-
-    @classmethod 
-    def dropoff_event(cls, ride_id, bus_id, location, **kwargs): 
-        cls.ride_statuses[ride_id]['status'] = 'completed'
-        cls.buses[bus_id] = {
-            "rides" : {}, 
-            "route" : [],
-            "location" : location
-        }
+        # generate pickup and dropoff events
+        events = []
+        for (origin, dest), (pickup, dropoff) in travel_times.items():
+            pickup_time = current_ts + pickup
+            dropoff_time = current_ts + dropoff
+            # print("Times: ", current_ts, pickup_time, dropoff_time)
+            pickup_event = PickupEvent(ride_id=ride_id, bus_id=nearest_bus, location=origin, ts=pickup_time)
+            dropoff_event = DropoffEvent(ride_id=ride_id, bus_id=nearest_bus, location=dest, ts=dropoff_time)
+            events.extend((pickup_event, dropoff_event))
+        events.append(EndScheduleEvent())
+        cls.pass_events([e for e in events])
 
     @classmethod
-    def pass_events(cls, *events):
+    def pickup_event(cls, ride_id, bus_id, location, **kwargs):
+        cls.ride_statuses[ride_id]["status"] = "picked up"
+        cls.ride_statuses[ride_id]["pickup_time"] = kwargs["time"]
+        cls.buses[bus_id]["location"] = location
+
+    @classmethod
+    def dropoff_event(cls, ride_id, bus_id, location, **kwargs):
+        cls.ride_statuses[ride_id]["status"] = "completed"
+        cls.ride_statuses[ride_id]["dropoff_time"] = kwargs["time"]
+        cls.buses[bus_id]["location"] = location
+        try:
+            del cls.buses[bus_id]["rides"][ride_id]
+        except KeyError:
+            print(f"Ride id {ride_id} not found on bus {bus_id}")
+        schedule_time = cls.ride_statuses[ride_id]["schedule_time"]
+        # print("Schedule: ", schedule_time)
+        # print("Dropoff: ", kwargs["time"])
+        print(f"Total time for ride {ride_id}: {kwargs['time']-schedule_time}")
+
+    @classmethod
+    def pass_events(cls, events):
         '''
         Passes given event objects back to multiprocessing queue for engine to execute
         '''
@@ -225,7 +237,7 @@ class SchedulerCore(threading.Thread):
             cls.scheduler.send(e)
 
     @classmethod
-    def graph_update(cls, requested_timestamp, **kwargs): 
+    def graph_update(cls, requested_timestamp, **kwargs):
         cls.scheduler.update(requested_timestamp)
 if __name__ == "__main__":
     scheduler = Scheduler()
