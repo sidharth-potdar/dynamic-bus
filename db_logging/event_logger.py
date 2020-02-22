@@ -30,7 +30,7 @@ class EventLogger():
     def log_events(self, event_list, table_name):
         prefix = f"INSERT INTO {table_name} values"
         for i, event in enumerate(event_list):
-            event_str = "(" + str(i + self.curr_sim_id) + event[2:-1] + "," + str(self.curr_sim_id) + ")"
+            event_str = "(" + str(i + 1) + event[2:-1] + "," + str(self.curr_sim_id) + ")"
             insert_str = prefix + event_str + ";"
             print(insert_str)
             self.c.execute(insert_str)

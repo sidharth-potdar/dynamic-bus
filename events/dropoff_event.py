@@ -32,4 +32,4 @@ class DropoffEvent(Event):
         return return_dict
 
     def __repr__(self):
-        return f"(0,'{self.getId()}',{self.ts},{self.location},{self.priority},{self.bus_id})"
+        return f"(0,'{self.ride_id}',{self.ts},{self.location},{self.priority},{self.bus_id})"

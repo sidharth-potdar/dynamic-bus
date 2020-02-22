@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS Requests (
-	id INTEGER PRIMARY KEY,
+	id INTEGER,
 	ride_id VARCHAR,
 	execute_ts NUMERIC,
 	origin_node NUMERIC,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Requests (
 );
 
 CREATE TABLE IF NOT EXISTS Schedules (
-	id INTEGER PRIMARY KEY,
+	id INTEGER,
 	ride_id VARCHAR,
 	execute_ts NUMERIC,
 	origin_node NUMERIC,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS Schedules (
 );
 
 CREATE TABLE IF NOT EXISTS Pickups (
-	id INTEGER PRIMARY KEY,
+	id INTEGER,
 	ride_id VARCHAR,
 	execute_ts NUMERIC,
 	location NUMERIC,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS Pickups (
 );
 
 CREATE TABLE IF NOT EXISTS Dropoffs (
-	id INTEGER PRIMARY KEY,
+	id INTEGER,
 	ride_id VARCHAR,
 	execute_ts NUMERIC,
 	location NUMERIC,

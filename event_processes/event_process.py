@@ -23,7 +23,7 @@ class EventProcess(Process):
     def run(self):
         min_hr = None
         max_hr = None
-        for ride in self._rides[:len(self._rides) ]:
+        for ride in self._rides[:len(self._rides)]:
             origin_node, destination_node, event_ts = ride
             if min_hr is None: 
                 min_hr = event_ts

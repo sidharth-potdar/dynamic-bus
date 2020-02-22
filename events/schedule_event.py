@@ -35,6 +35,6 @@ class ScheduleEvent(Event):
         return return_dict
 
     def __repr__(self):
-        return f"(0,'{self.getId()}',{self.ts},{self.origin_node},{self.destination_node},{self.priority})"
+        return f"(0,'{self.ride_id}',{self.ts},{self.origin_node},{self.destination_node},{self.priority})"
 
 
