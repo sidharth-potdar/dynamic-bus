@@ -113,9 +113,9 @@ class GeneticAlgorithmPlanner(Planner):
             # map from (origin, dest) -> (pickup, dropoff) times
             # print(pickup, dropoff)
             travel_times[(origin.id, dest.id, origin.ride_id)] = (pickup, dropoff)
-            if pickup < 0 or dropoff < 0:
-                print(f"Negative dropoff time in GA: {dropoff}")
-                print(f"Start: {start}, end: {end}")
+            if pickup >= dropoff:
+                print(f"Pickup > dropoff: {pickup}, {dropoff}")
+
         return best_fittest.travel_cost, best_route, travel_times
 
 

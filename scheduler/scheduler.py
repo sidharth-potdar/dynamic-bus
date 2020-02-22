@@ -102,7 +102,7 @@ class SchedulerComm(threading.Thread):
             # if we haven't seen the engine in a while...
             if time.time() - last_engine_heartbeat > 5:
                 # mark that we don't have a heartbeat.
-                if self.scheduler.heartbeat: 
+                if self.scheduler.heartbeat:
                     print("Haven't seen the engine in a while...")
                 self.scheduler.heartbeat = False
 
@@ -138,9 +138,9 @@ class SchedulerCore(threading.Thread):
         last_seen = time.time()
         log_time = time.time()
         while self.running:
-            if time.time() - log_time > 5: 
+            if time.time() - log_time > 5:
                 print(f"Exec Queue: {len(self.execution_queue)}")
-                log_time = time.time() 
+                log_time = time.time()
             if len(self.execution_queue) > 0:
                 self.scheduler.send_heartbeat = True
                 msg = self.execution_queue.popleft()
@@ -235,8 +235,9 @@ class SchedulerCore(threading.Thread):
             dropoff_time, dropoff_route = cls.graph.find_shortest_path(origin_node, destination_node)
             pickup_time /= 3600
             dropoff_time /= 3600
-            if dropoff_time < 0:
-                print(f"Negative dropoff time in empty bus: {dropoff_time}")
+            dropoff_time += pickup_time
+            if pickup_time > dropoff_time:
+                print(f"Pickup time greater than dropoff time without GA")
             travel_times = { (origin_node, destination_node, ride_id) : (pickup_time, dropoff_time) }
             route = pickup_route + dropoff_route
         else:
@@ -274,6 +275,8 @@ class SchedulerCore(threading.Thread):
         for (origin, dest, r_id), (pickup, dropoff) in travel_times.items():
             pickup_time = current_ts + pickup
             dropoff_time = current_ts + dropoff
+            if pickup > dropoff:
+                print("Pickup time greater than dropoff time")
             # print("Times: ", current_ts, pickup_time, dropoff_time)
             pickup_event = PickupEvent(ride_id=r_id, bus_id=nearest_bus, location=origin, ts=pickup_time)
             dropoff_event = DropoffEvent(ride_id=r_id, bus_id=nearest_bus, location=dest, ts=dropoff_time)
