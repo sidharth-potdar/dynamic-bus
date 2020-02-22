@@ -21,10 +21,13 @@ def main():
     # pickup_dist, dropoff_dist = generateDistributions()
 
     # start the engine
-    engine = Engine(pipe_recv_from_scheduler = s_to_e_recv, pipe_recv_from_gen = g_to_e_recv, pipe_send_to_scheduler = e_to_s_send)
+    num_buses = 100
+    bus_capacity = 5
+    engine = Engine(pipe_recv_from_scheduler = s_to_e_recv, pipe_recv_from_gen = g_to_e_recv, pipe_send_to_scheduler = e_to_s_send, num_buses = num_buses, bus_capacity=bus_capacity)
     engine.start()
 
-    scheduler = Scheduler(pipe_send_to_engine=s_to_e_send, pipe_recv_from_engine=e_to_s_recv, graph=graph)
+    scheduler = Scheduler(pipe_send_to_engine=s_to_e_send, pipe_recv_from_engine=e_to_s_recv, graph=graph, num_buses = num_buses, bus_capacity = bus_capacity)
+
     scheduler.start()
 
 

@@ -11,7 +11,7 @@ from events import NumRidesEvent, NumBusesEvent, BusCapacityEvent
 class EngineCore(threading.Thread):
     ''' Engine thread executes in background'''
 
-    def __init__(self, engine):
+    def __init__(self, engine, num_buses = 5, bus_capacity = 100):
         super().__init__()
         self._queue = engine.getQueue()
         self._lock = engine.getLock()
@@ -28,6 +28,8 @@ class EngineCore(threading.Thread):
         self.past_schedules = []
         self.past_pickups= []
         self.past_dropoffs = []
+        self.num_buses = num_buses
+        self.bus_capacity = bus_capacity
 
 
     def schedule(self, *events):

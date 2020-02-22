@@ -23,7 +23,7 @@ class Scheduler(mp.Process):
         # Initialize Communication and Core
         self.comm = SchedulerComm(self, daemon=True)
         self.core = SchedulerCore(self)
-        SchedulerCore.init(graph)
+        SchedulerCore.init(graph, num_buses=kwargs['num_buses'], bus_capacity=kwargs['bus_capacity'])
 
         # Setup Graph
         self.graph = graph
@@ -336,9 +336,8 @@ class SchedulerCore(threading.Thread):
     @classmethod
     def graph_update(cls, requested_timestamp, **kwargs):
         cls.scheduler.update(requested_timestamp)
+
 if __name__ == "__main__":
     scheduler = Scheduler()
     scheduler.init()
-    numbev = NumBusesEvent(0,scheduler.num_buses)
-    capev = BusCapacityEvent(0, scheduler.bus_capacity)
     SchedulerCore.pass_events([numbev, capev])

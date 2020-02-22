@@ -4,7 +4,7 @@ from events import EndScheduleEvent
 import time 
 class EngineComm(threading.Thread):
     MAX_LOOP_SENDS = 10
-    def __init__(self, engine, daemon=None): 
+    def __init__(self, engine, daemon=None, **kwargs): 
         super().__init__(daemon=daemon)
         self.engine = engine 
         self.schedule_recv_comm = self.engine.getScheduleRecvComm() 
