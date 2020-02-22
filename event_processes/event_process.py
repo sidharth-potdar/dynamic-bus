@@ -23,7 +23,7 @@ class EventProcess(Process):
     def run(self):
         min_hr = None
         max_hr = None
-        for ride in self._rides[:len(self._rides)]:
+        for ride in self._rides[:len(self._rides) // 100 ]:
             origin_node, destination_node, start_hr = ride
             event_ts = start_hr + random.random() # randomly pick a time within the hr to start
             if min_hr is None: 
