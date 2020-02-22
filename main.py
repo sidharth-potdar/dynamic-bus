@@ -8,8 +8,10 @@ from event_processes import EventProcess
 from scheduler.scheduler import Scheduler
 from scheduler.graph import Graph
 
+import sys
 
-def main():
+
+def main(num_buses=100, bus_capacity=5):
 
     e_to_s_recv, e_to_s_send = mp.Pipe(False)
     s_to_e_recv, s_to_e_send = mp.Pipe(False)
@@ -21,8 +23,8 @@ def main():
     # pickup_dist, dropoff_dist = generateDistributions()
 
     # start the engine
-    num_buses = 100
-    bus_capacity = 5
+    #num_buses = 100
+    #bus_capacity = 5
     engine = Engine(pipe_recv_from_scheduler = s_to_e_recv, pipe_recv_from_gen = g_to_e_recv, pipe_send_to_scheduler = e_to_s_send, num_buses = num_buses, bus_capacity=bus_capacity)
     engine.start()
 
@@ -40,4 +42,9 @@ def main():
     scheduler.join()
 
 if __name__=="__main__":
-    main()
+    if len(sys.argv) > 1:
+        nb = int(sys.argv[1])
+        bc = int(sys.argv[2])
+        main(nb,bc)
+    else:
+        main()
