@@ -9,7 +9,7 @@ class EventLogger():
         
         need_to_create = False
         # schema for tables
-        self.must_have_tables = ['Requests','Schedules','Pickups','Dropoffs','SimRuns'] 
+        self.must_have_tables = ['SimRuns', 'Requests','Schedules','Pickups','Dropoffs'] 
 
         self.c.execute("SELECT name from sqlite_master where type='table';")
         tables_in_db = self.c.fetchall()
@@ -30,19 +30,26 @@ class EventLogger():
     def log_events(self, event_list, table_name):
         prefix = f"INSERT INTO {table_name} values"
         for i, event in enumerate(event_list):
-            event = "(" + str(i + self.curr_sim_id) + event[2:-1] + str(self.curr_sim_id) + ")"
-            insert_str = prefix + event + ";"
+            event_str = "(" + str(i + self.curr_sim_id) + event[2:-1] + "," + str(self.curr_sim_id) + ")"
+            insert_str = prefix + event_str + ";"
+            print(insert_str)
             self.c.execute(insert_str)
 
     def log_sim(self, sim_tuple, table_name):
-        rows = self.c.execute("SELECT MAX(sim_id) from SimRuns;")
-        max_sim_id = int(rows[0][0])
+        rows = self.c.execute("SELECT MAX(sim_id) from SimRuns;").fetchall()
+        if rows[0][0] is None:
+            max_sim_id = 0
+        else:
+            max_sim_id = int(rows[0][0])
         self.curr_sim_id = max_sim_id + 1
 
         prefix = f"INSERT INTO {table_name} values"
+        sim_tuple = list(sim_tuple)
         sim_tuple[0] = self.curr_sim_id
+        sim_tuple = tuple(sim_tuple)
 
         query_str = prefix + str(sim_tuple) + ";"
+        self.c.execute(query_str)
 
 
     def log(self, sim_tuple, past_requests, past_schedules, past_pickups, past_dropoffs):

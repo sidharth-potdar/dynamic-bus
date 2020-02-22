@@ -6,7 +6,7 @@ class ScheduleEvent(Event):
         self.ride_id = ride_id
         self.origin_node = origin_node
         self.destination_node = destination_node
-        self.bus_id = None
+        #self.bus_id = None
 
         self.ts = ts
         self.priority = priority
@@ -35,6 +35,6 @@ class ScheduleEvent(Event):
         return return_dict
 
     def __repr__(self):
-        return f"(0,{self.getId()},{self.ts},{self.origin_node},{self.destination_node},{self.priority},{self.bus_id})"
+        return f"(0,'{self.getId()}',{self.ts},{self.origin_node},{self.destination_node},{self.priority})"
 
 

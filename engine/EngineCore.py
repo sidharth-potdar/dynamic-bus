@@ -79,12 +79,12 @@ class EngineCore(threading.Thread):
             if isinstance(event, NumRidesEvent):
                 self.num_rides = event.execute()
                 continue
-            elif isinstance(event, NumBusesEvent):
-                self.num_buses = event.execute()
-                continue
-            elif isinstance(event, BusCapacityEvent):
-                self.bus_capacity = event.execute()
-                continue
+            # elif isinstance(event, NumBusesEvent):
+            #     self.num_buses = event.execute()
+            #     continue
+            # elif isinstance(event, BusCapacityEvent):
+            #     self.bus_capacity = event.execute()
+            #     continue
             elif isinstance(event, RequestEvent):
                 self.past_requests.append(repr(event))
             elif isinstance(event, ScheduleEvent):
@@ -125,7 +125,7 @@ class EngineCore(threading.Thread):
             # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
         end_time = time.time()
         el = EventLogger()
-        sim_tup = (self.num_rides, self.num_buses, self.bus_capacity, end_time - self.start_time)
+        sim_tup = (0, self.num_rides, self.num_buses, self.bus_capacity, end_time - self.start_time)
         el.log(sim_tup, self.past_requests, self.past_schedules, self.past_pickups, self.past_dropoffs)
 
 
