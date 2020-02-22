@@ -35,8 +35,6 @@ class Scheduler(mp.Process):
         self.heartbeat = True
         self.send_heartbeat = True
 
-        self.execution_queue = deque()
-
     def send(self, msg):
         self.comm.send(msg)
 
@@ -102,6 +100,8 @@ class SchedulerComm(threading.Thread):
             # if we haven't seen the engine in a while...
             if time.time() - last_engine_heartbeat > 5:
                 # mark that we don't have a heartbeat.
+                if self.scheduler.heartbeat: 
+                    print("Haven't seen the engine in a while...")
                 self.scheduler.heartbeat = False
 
     def send(self, msg):
@@ -134,7 +134,11 @@ class SchedulerCore(threading.Thread):
     def run(self):
         SchedulerCore.instance = self
         last_seen = time.time()
+        log_time = time.time()
         while self.running:
+            if time.time() - log_time > 5: 
+                print(f"Exec Queue: {len(self.execution_queue)}")
+                log_time = time.time() 
             if len(self.execution_queue) > 0:
                 self.scheduler.send_heartbeat = True
                 msg = self.execution_queue.popleft()
@@ -211,10 +215,10 @@ class SchedulerCore(threading.Thread):
         # find nearest eligible buses
         nearest_bus = cls.find_nearest_bus(origin_node)
         current_ts = kwargs["time"]
-
         if nearest_bus is None:
             # TODO: implement logic for no available bus
             # print("Out of buses! Please implement solution")
+            cls.pass_events(EndScheduleEvent(kwargs['uuid']))
             return
 
         bus_node = cls.buses[nearest_bus]["location"]
@@ -272,12 +276,12 @@ class SchedulerCore(threading.Thread):
             cls.ride_statuses[r_id]["pickup_event_id"] = pickup_event._id
             cls.ride_statuses[r_id]["dropoff_event_id"] = dropoff_event._id
 
-            cls.pass_events(pickup_event, dropoff_event, EndScheduleEvent())
+            cls.pass_events(pickup_event, dropoff_event)
+        cls.pass_events(EndScheduleEvent(kwargs['uuid']))
 
     @classmethod
     def pickup_event(cls, ride_id, bus_id, location, **kwargs):
         if kwargs["uuid"] in cls.invalid_events:
-            # print(f"Invalid event {kwargs['uuid']}")
             return
         if (ride_id, bus_id) in cls.completed_pickups:
             return
@@ -288,12 +292,11 @@ class SchedulerCore(threading.Thread):
         cls.ride_statuses[ride_id]["pickup_time"] = kwargs["time"]
         cls.buses[bus_id]["location"] = location
 
-        print(f"Bus {bus_id} picked up {ride_id} at {kwargs['time']}")
+        # print(f"Bus {bus_id} picked up {ride_id} at {kwargs['time']}")
 
     @classmethod
     def dropoff_event(cls, ride_id, bus_id, location, **kwargs):
         if kwargs["uuid"] in cls.invalid_events:
-            # print(f"Invalid event {kwargs['uuid']}")
             return
         if (ride_id, bus_id) in cls.completed_dropoffs:
             return
@@ -314,7 +317,7 @@ class SchedulerCore(threading.Thread):
         origin = cls.ride_statuses[ride_id]["origin"]
         dest = cls.ride_statuses[ride_id]["destination"]
 
-        print(f"Bus {bus_id} dropped off {ride_id} at {kwargs['time']} with travel time {kwargs['time']-pickup_time}")
+        # print(f"Bus {bus_id} dropped off {ride_id} at {kwargs['time']} with travel time {kwargs['time']-pickup_time}")
 
     @classmethod
     def pass_events(cls, *events):

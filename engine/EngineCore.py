@@ -39,8 +39,13 @@ class EngineCore(threading.Thread):
         time.sleep(1)
         end = False 
         last_seen = time.time() 
+        log_time = time.time() 
+
         while not end:
             # pop from heapq
+            if time.time() - log_time > 5: 
+                print(f"Heap: {len(self._queue)}") 
+                log_time = time.time() 
             if (len(self._queue) > 0):
                 self.engine.send_heartbeat = True 
                 last_seen = time.time() 

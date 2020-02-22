@@ -17,6 +17,7 @@ class EngineComm(threading.Thread):
         last_heartbeat_time = time.time() 
         # keep track of last engine heartbeat signal
         last_schedule_heartbeat = time.time() 
+        res_cache = None 
         while self.on: 
             if self.schedule_recv_comm.poll(): 
                 res = self.schedule_recv_comm.recv() 

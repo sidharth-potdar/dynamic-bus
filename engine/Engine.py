@@ -17,7 +17,8 @@ class Engine(mp.Process):
         self.comm = EngineComm(self, daemon=True, **kwargs)
         self.core = EngineCore(self, **kwargs)
         self.time = 0 
-        self.scheduleSemaphore = threading.Semaphore(0) 
+        self.scheduleSemaphore = threading.BoundedSemaphore(1) 
+        self.scheduleSemaphore.acquire()
         self.send_heartbeat = True 
         self.heartbeat = True 
 
