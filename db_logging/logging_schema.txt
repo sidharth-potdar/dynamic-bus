@@ -1,0 +1,51 @@
+CREATE TABLE IF NOT EXISTS Requests (
+	id INTEGER PRIMARY KEY,
+	ride_id INTEGER,
+	execute_ts NUMERIC,
+	origin_node NUMERIC,
+	dest_node NUMERIC,
+	sim_id INTEGER,
+	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
+);
+
+CREATE TABLE IF NOT EXISTS Schedules (
+	id INTEGER PRIMARY KEY,
+	ride_id INTEGER,
+	execute_ts NUMERIC,
+	origin_node NUMERIC,
+	dest_node NUMERIC,
+	priority NUMERIC,
+	bus_id INTEGER,
+	sim_id INTEGER,
+	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
+);
+
+CREATE TABLE IF NOT EXISTS Pickups (
+	id INTEGER PRIMARY KEY,
+	ride_id INTEGER,
+	execute_ts NUMERIC,
+	location NUMERIC,
+	priority NUMERIC,
+	bus_id INTEGER,
+	sim_id INTEGER,
+	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
+);
+
+CREATE TABLE IF NOT EXISTS Dropoffs (
+	id INTEGER PRIMARY KEY,
+	ride_id INTEGER,
+	execute_ts NUMERIC,
+	location NUMERIC,
+	priority NUMERIC,
+	bus_id INTEGER,
+	sim_id INTEGER,
+	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
+);
+
+CREATE TABLE IF NOT EXISTS SimRuns (
+	sim_id INTEGER PRIMARY KEY,
+	num_rides INTEGER,
+	num_buses INTEGER,
+	bus_capacity INTEGER,
+	execution_time NUMERIC
+);

@@ -5,6 +5,7 @@ from events import RequestEvent
 from events import GraphUpdateEvent
 from events import InvalidateEvent
 from distributions import prob_dist
+from events import NumRidesEvent
 
 class EventProcess(Process):
     def __init__(self, queue, id, graph):
@@ -39,3 +40,5 @@ class EventProcess(Process):
         while i <= 10: 
             self._comm.send(GraphUpdateEvent(i, i))
             i += 0.5
+
+        self._comm.send(NumRidesEvent(0,len(self._rides)))

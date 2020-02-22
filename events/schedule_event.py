@@ -1,12 +1,15 @@
 from .event import Event
 
 class ScheduleEvent(Event):
-    def __init__(self, ts, ride_id, origin_node, destination_node):
+    def __init__(self, ts, ride_id, origin_node, destination_node, priority=1):
         super(ScheduleEvent, self).__init__(ts)
         self.ride_id = ride_id
         self.origin_node = origin_node
         self.destination_node = destination_node
         self.bus_id = None
+
+        self.ts = ts
+        self.priority = priority
 
     def execute(self):
         '''
@@ -30,3 +33,8 @@ class ScheduleEvent(Event):
             ]
         }
         return return_dict
+
+    def __repr__(self):
+        return f"(0,{self.getId()},{self.ts},{self.origin_node},{self.destination_node},{self.priority},{self.bus_id})"
+
+

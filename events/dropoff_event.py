@@ -1,11 +1,14 @@
 from .event import Event
 
 class DropoffEvent(Event):
-    def __init__(self, ts, ride_id, bus_id, location):
+    def __init__(self, ts, ride_id, bus_id, location, priority = 1):
         super(DropoffEvent, self).__init__(ts)
         self.ride_id = ride_id
         self.bus_id = bus_id
         self.location = location
+
+        self.ts = ts
+        self.priority = priority
 
     def execute(self):
         '''
@@ -27,3 +30,6 @@ class DropoffEvent(Event):
             ]
         }
         return return_dict
+
+    def __repr__(self):
+        return f"(0,{self.getId()},{self.ts},{self.location},{self.priority},{self.bus_id})"

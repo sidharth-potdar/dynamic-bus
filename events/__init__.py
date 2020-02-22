@@ -6,3 +6,4 @@ from .dropoff_event import DropoffEvent
 from .graph_update_event import GraphUpdateEvent
 from .end_schedule_event import EndScheduleEvent
 from .invalidate_event import InvalidateEvent
+from .info_event import NumRidesEvent, NumBusesEvent, BusCapacityEvent
