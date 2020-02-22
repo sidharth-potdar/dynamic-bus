@@ -8,8 +8,10 @@ from event_processes import EventProcess
 from scheduler.scheduler import Scheduler
 from scheduler.graph import Graph
 
+import sys
 
-def main(num_buses = None, bus_capacity = None):
+
+def main(num_buses=100, bus_capacity=5):
 
     e_to_s_recv, e_to_s_send = mp.Pipe(False)
     s_to_e_recv, s_to_e_send = mp.Pipe(False)
@@ -40,38 +42,40 @@ def main(num_buses = None, bus_capacity = None):
     scheduler.join()
 
 if __name__=="__main__":
-    MAX_CONCURRENT_SIMS = 2
-    MIN_BUS_CAPACITY = 1 
-    MAX_BUS_CAPACITY = 4
-    MIN_BUSSES = 10
-    MAX_BUSSES = 21 
-    args = []
-    for i in range(MIN_BUSSES, MAX_BUSSES + 1, 10): 
-        for j in range(MIN_BUS_CAPACITY, MAX_BUS_CAPACITY): 
-            args.append({"num_buses":  i, "bus_capacity":  j})
-    
-    Ps = [None] * MAX_CONCURRENT_SIMS
-    i = 0 
-    while i < len(args): 
-        for p_c, p in enumerate(Ps): 
-            if p is None: 
-                Ps[p_c] = mp.Process(target=main, kwargs=args[i], name=str(args[i]), daemon=False) 
-                Ps[p_c].start() 
-                i += 1                
-                print(f"STARTING PROCESS {i} / {len(args)}")
-            elif not p.is_alive(): 
-                # process ended. 
-                Ps[p_c] = mp.Process(target=main, kwargs=args[i], name=str(args[i]), daemon=False)
-                Ps[p_c].start() 
-                i += 1
-                print(f"STARTING PROCESS {i} / {len(args)}")
 
-            else: 
-                time.sleep(1) # stability 
-
-    for p in Ps:
-        p.join() 
-            
-
+    if len(sys.argv) > 1:
+        nb = int(sys.argv[1])
+        bc = int(sys.argv[2])
+        main(nb,bc)
+    else: 
+        MAX_CONCURRENT_SIMS = 2
+        MIN_BUS_CAPACITY = 1 
+        MAX_BUS_CAPACITY = 4
+        MIN_BUSSES = 10
+        MAX_BUSSES = 21 
+        args = []
+        for i in range(MIN_BUSSES, MAX_BUSSES + 1, 10): 
+            for j in range(MIN_BUS_CAPACITY, MAX_BUS_CAPACITY): 
+                args.append({"num_buses":  i, "bus_capacity":  j})
         
+        Ps = [None] * MAX_CONCURRENT_SIMS
+        i = 0 
+        while i < len(args): 
+            for p_c, p in enumerate(Ps): 
+                if p is None: 
+                    Ps[p_c] = mp.Process(target=main, kwargs=args[i], name=str(args[i]), daemon=False) 
+                    Ps[p_c].start() 
+                    i += 1                
+                    print(f"STARTING PROCESS {i} / {len(args)}")
+                elif not p.is_alive(): 
+                    # process ended. 
+                    Ps[p_c] = mp.Process(target=main, kwargs=args[i], name=str(args[i]), daemon=False)
+                    Ps[p_c].start() 
+                    i += 1
+                    print(f"STARTING PROCESS {i} / {len(args)}")
 
+                else: 
+                    time.sleep(1) # stability 
+        for p in Ps:
+            p.join() 
+            

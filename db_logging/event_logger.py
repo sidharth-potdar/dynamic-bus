@@ -35,7 +35,7 @@ class EventLogger():
             self.c.execute(insert_str)
 
     def log_sim(self, sim_tuple, table_name):
-        row = self.c.execute("SELECT MAX(sim_id) from SimRuns;")
+        rows = self.c.execute("SELECT MAX(sim_id) from SimRuns;")
         max_sim_id = int(rows[0][0])
         self.curr_sim_id = max_sim_id + 1
 
