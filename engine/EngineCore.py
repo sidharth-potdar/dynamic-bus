@@ -40,7 +40,7 @@ class EngineCore(threading.Thread):
         end = False 
         last_seen = time.time() 
         log_time = time.time() 
-
+        lock_next = False 
         while not end:
             # pop from heapq
             if time.time() - log_time > 5: 
@@ -58,14 +58,28 @@ class EngineCore(threading.Thread):
                 continue 
             else:
                 continue
-            while not event.isValid():
+            while not event.isValid() and len(self._queue) > 0:
                 # TODO - some sort of logging
                 # self.logger.info("%s %s marked as invalid." % (event.__class__, event.getId()))
                 # Here mark invalid event
                 priority, event = heapq.heappop(self._queue)
             self.now = event.getExecutionPoint()
+            
+            if type(event) == ScheduleEvent:
+                now = time.time()
+                if i % 100 == 0:
+                    print(f"Executing {i} schedule events in", time.time() - last_time, ";", j, "other events executed")
+                    i = 0
+                    j = 0
+                    last_time = time.time()
+                if lock_next != False : 
+                    self.engine.scheduleSemaphore.acquire()
+                lock_next = event.getId() 
+                i += 1
+            else: 
+                j += 1
             results = event.execute()
-            j += 1
+
             if "events" in results:
                 for e in results['events']:
                     self.schedule(e)
@@ -74,15 +88,6 @@ class EngineCore(threading.Thread):
                     self.engine.send(call)
             if "ids" in results:
                 self.remove(*results['ids'])
-            if type(event) == ScheduleEvent:
-                now = time.time()
-                if i % 100 == 0:
-                    print(f"Executing {i} schedule events in", time.time() - last_time, ";", j, "other events executed")
-                    i = 0
-                    j = 0
-                    last_time = time.time()
-                self.engine.scheduleSemaphore.acquire()
-                i += 1
                 # print("Slept for", time.time() - now, "seconds")
                 # floors speed to 60x real life
             #TODO more logging
