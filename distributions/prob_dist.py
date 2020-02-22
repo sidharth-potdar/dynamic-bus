@@ -1,5 +1,7 @@
 import random
 import csv
+from operator import itemgetter
+
 
 def generateRides(multiplier=1):
     with open('distributions/ride_volume.csv','r') as ridef:
@@ -42,9 +44,11 @@ def generateRides(multiplier=1):
             from_ct, to_ct = from_to_hr_str[1:-4].split(',') # ignore hr space comma and inner parens
             from_ct = from_ct.strip()
             to_ct = to_ct.strip()
+            hr += random.random()
             fth.append((from_ct,to_ct,hr))
             probs.append(probability)
 
 
     generated_rides = random.choices(population=fth, weights=probs, k=num_rides)
+    generated_rides.sort(key=itemgetter(2))
     return generated_rides
