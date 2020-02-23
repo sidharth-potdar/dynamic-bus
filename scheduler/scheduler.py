@@ -209,15 +209,21 @@ class SchedulerCore(threading.Thread):
         }
 
     @classmethod
-    def create_bus(cls, location):
+    def create_bus(cls, time, location, origin_ride_id):
         '''
         Creates new bus at given location
         '''
         new_bus_id = cls.num_buses
         cls.buses[new_bus_id] = { "rides": {}, "route": [], "location": location }
         cls.num_buses += 1
-
-        num_buses_event = NumBusesEvent(ts=0, num_buses=cls.num_buses)
+        print("Creating bus")
+        num_buses_event = NumBusesEvent(
+            ts=time, 
+            num_buses=cls.num_buses, 
+            origin_ride_id= origin_ride_id, 
+            new_bus_id = new_bus_id, 
+            location = location
+        )
         cls.pass_events(num_buses_event)
 
         return new_bus_id
@@ -232,7 +238,7 @@ class SchedulerCore(threading.Thread):
         nearest_bus = cls.find_nearest_bus(origin_node)
         current_ts = kwargs["time"]
         if nearest_bus is None:
-            nearest_bus = cls.create_bus(origin_node)
+            nearest_bus = cls.create_bus(current_ts, origin_node, ride_id)
 
         bus_node = cls.buses[nearest_bus]["location"]
 

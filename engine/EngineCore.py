@@ -28,6 +28,7 @@ class EngineCore(threading.Thread):
         self.past_schedules = []
         self.past_pickups= []
         self.past_dropoffs = []
+        self.num_bus_increases = []
         self.num_buses = num_buses
         self.bus_capacity = bus_capacity
 
@@ -81,18 +82,19 @@ class EngineCore(threading.Thread):
                 continue
             elif isinstance(event, NumBusesEvent):
                 self.num_buses = event.execute()
+                self.num_bus_increases.append(event)
                 continue
-            # elif isinstance(event, BusCapacityEvent):
-            #     self.bus_capacity = event.execute()
-            #     continue
+            elif isinstance(event, BusCapacityEvent):
+                self.bus_capacity = event.execute()
+                continue
             elif isinstance(event, RequestEvent):
-                self.past_requests.append(repr(event))
+                self.past_requests.append(event)
             elif isinstance(event, ScheduleEvent):
-                self.past_schedules.append(repr(event))
+                self.past_schedules.append(event)
             elif isinstance(event, PickupEvent):
-                self.past_pickups.append(repr(event))
+                self.past_pickups.append(event)
             elif isinstance(event, DropoffEvent):
-                self.past_dropoffs.append(repr(event))
+                self.past_dropoffs.append(event)
 
             self.now = event.getExecutionPoint()
 
@@ -100,6 +102,7 @@ class EngineCore(threading.Thread):
                 now = time.time()
                 if i % 100 == 0:
                     print(f"Executing {i} schedule events in", time.time() - last_time, ";", j, "other events executed")
+                    print(f"Sim Time: {self.now}")
                     i = 0
                     j = 0
                     last_time = time.time()
@@ -124,9 +127,17 @@ class EngineCore(threading.Thread):
             #TODO more logging
             # self.logger.info("%s %s executed at %s" % (event.__class__, event.getId(), event.getExecutionPoint()))
         end_time = time.time()
+        # clean up invalid events 
+        valid_filter = lambda x: list(map(repr, filter(lambda y: y.isValid, x)))
         el = EventLogger()
         sim_tup = (0, self.num_rides, self.num_buses, self.bus_capacity, end_time - self.start_time)
-        el.log(sim_tup, self.past_requests, self.past_schedules, self.past_pickups, self.past_dropoffs)
+        el.log(sim_tup, 
+            valid_filter(self.past_requests), 
+            valid_filter(self.past_schedules), 
+            valid_filter(self.past_pickups), 
+            valid_filter(self.past_dropoffs), 
+            valid_filter(self.num_bus_increases)
+            )
 
 
     def remove(self, *uuids):

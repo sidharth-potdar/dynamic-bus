@@ -41,6 +41,17 @@ CREATE TABLE IF NOT EXISTS Dropoffs (
 	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
 );
 
+CREATE TABLE IF NOT EXISTS NumBusesIncrease (
+	id INTEGER, 
+	ride_id VARCHAR, 
+	execute_ts NUMERIC, 
+	location NUMERIC,
+	num_buses INTEGER,
+	bus_id INTEGER, 
+	sim_id INTEGER, 
+	FOREIGN KEY (sim_id) REFERENCES SimRuns(sim_id)
+);
+
 CREATE TABLE IF NOT EXISTS SimRuns (
 	sim_id INTEGER PRIMARY KEY,
 	num_rides INTEGER,

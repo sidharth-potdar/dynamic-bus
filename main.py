@@ -48,11 +48,11 @@ if __name__=="__main__":
         bc = int(sys.argv[2])
         main(nb,bc)
     else: 
-        MAX_CONCURRENT_SIMS = 2
+        MAX_CONCURRENT_SIMS = 3
         MIN_BUS_CAPACITY = 1 
-        MAX_BUS_CAPACITY = 4
+        MAX_BUS_CAPACITY = 7
         MIN_BUSSES = 10
-        MAX_BUSSES = 21 
+        MAX_BUSSES = 200 
         args = []
         for i in range(MIN_BUSSES, MAX_BUSSES + 1, 10): 
             for j in range(MIN_BUS_CAPACITY, MAX_BUS_CAPACITY): 

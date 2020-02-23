@@ -9,7 +9,7 @@ class EventLogger():
         
         need_to_create = False
         # schema for tables
-        self.must_have_tables = ['SimRuns', 'Requests','Schedules','Pickups','Dropoffs'] 
+        self.must_have_tables = ['SimRuns', 'Requests','Schedules','Pickups','Dropoffs', 'NumBusesIncrease'] 
 
         self.c.execute("SELECT name from sqlite_master where type='table';")
         tables_in_db = self.c.fetchall()
@@ -52,12 +52,15 @@ class EventLogger():
         self.c.execute(query_str)
 
 
-    def log(self, sim_tuple, past_requests, past_schedules, past_pickups, past_dropoffs):
+    def log(self, sim_tuple, past_requests, past_schedules, past_pickups, past_dropoffs, past_busincreases):
         self.log_sim(sim_tuple,self.must_have_tables[0])
         self.log_events(past_requests,self.must_have_tables[1])
         self.log_events(past_schedules, self.must_have_tables[2])
         self.log_events(past_pickups, self.must_have_tables[3])
         self.log_events(past_dropoffs, self.must_have_tables[4])
+        print(past_busincreases)
+        self.log_events(past_busincreases, self.must_have_tables[5])
+
         self.conn.commit()
         self.c.close()
         self.conn.close()
