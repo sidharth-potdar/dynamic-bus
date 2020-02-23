@@ -58,7 +58,6 @@ class EventLogger():
         self.log_events(past_schedules, self.must_have_tables[2])
         self.log_events(past_pickups, self.must_have_tables[3])
         self.log_events(past_dropoffs, self.must_have_tables[4])
-        print(past_busincreases)
         self.log_events(past_busincreases, self.must_have_tables[5])
 
         self.conn.commit()
