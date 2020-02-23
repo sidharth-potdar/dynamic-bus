@@ -11,7 +11,7 @@ from events import NumRidesEvent, NumBusesEvent, BusCapacityEvent
 class EngineCore(threading.Thread):
     ''' Engine thread executes in background'''
 
-    def __init__(self, engine, num_buses = 5, bus_capacity = 100):
+    def __init__(self, engine, num_buses = 100, bus_capacity = 5):
         super().__init__()
         self._queue = engine.getQueue()
         self._lock = engine.getLock()
@@ -49,25 +49,25 @@ class EngineCore(threading.Thread):
         i = 0
         j = 0
         time.sleep(1)
-        end = False 
-        last_seen = time.time() 
-        log_time = time.time() 
-        lock_next = False 
+        end = False
+        last_seen = time.time()
+        log_time = time.time()
+        lock_next = False
         while not end:
             # pop from heapq
-            if time.time() - log_time > 5: 
-                print(f"Heap: {len(self._queue)}") 
-                log_time = time.time() 
+            if time.time() - log_time > 5:
+                print(f"Heap: {len(self._queue)}")
+                log_time = time.time()
             if (len(self._queue) > 0):
-                self.engine.send_heartbeat = True 
-                last_seen = time.time() 
+                self.engine.send_heartbeat = True
+                last_seen = time.time()
                 with self._lock:
                     priority, event = heapq.heappop(self._queue)
-            elif time.time() - last_seen > 5: 
-                self.engine.send_heartbeat = False 
-                if not self.engine.heartbeat: 
+            elif time.time() - last_seen > 5:
+                self.engine.send_heartbeat = False
+                if not self.engine.heartbeat:
                     end = True
-                continue 
+                continue
             else:
                 continue
             while not event.isValid() and len(self._queue) > 0:
@@ -79,9 +79,9 @@ class EngineCore(threading.Thread):
             if isinstance(event, NumRidesEvent):
                 self.num_rides = event.execute()
                 continue
-            # elif isinstance(event, NumBusesEvent):
-            #     self.num_buses = event.execute()
-            #     continue
+            elif isinstance(event, NumBusesEvent):
+                self.num_buses = event.execute()
+                continue
             # elif isinstance(event, BusCapacityEvent):
             #     self.bus_capacity = event.execute()
             #     continue
@@ -92,10 +92,10 @@ class EngineCore(threading.Thread):
             elif isinstance(event, PickupEvent):
                 self.past_pickups.append(repr(event))
             elif isinstance(event, DropoffEvent):
-                self.past_dropoffs.append(repr(event)) 
+                self.past_dropoffs.append(repr(event))
 
             self.now = event.getExecutionPoint()
-            
+
             if type(event) == ScheduleEvent:
                 now = time.time()
                 if i % 100 == 0:
@@ -103,11 +103,11 @@ class EngineCore(threading.Thread):
                     i = 0
                     j = 0
                     last_time = time.time()
-                if lock_next != False : 
+                if lock_next != False :
                     self.engine.scheduleSemaphore.acquire()
-                lock_next = event.getId() 
+                lock_next = event.getId()
                 i += 1
-            else: 
+            else:
                 j += 1
             results = event.execute()
 

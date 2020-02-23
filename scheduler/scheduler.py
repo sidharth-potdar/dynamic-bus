@@ -110,7 +110,7 @@ class SchedulerComm(threading.Thread):
         self.send_buffer.append(msg)
 
 class SchedulerCore(threading.Thread):
-    num_buses = 2
+    num_buses = 100
     bus_capacity = 5
     start_nodes = []
     buses = {}
@@ -209,6 +209,20 @@ class SchedulerCore(threading.Thread):
         }
 
     @classmethod
+    def create_bus(cls, location):
+        '''
+        Creates new bus at given location
+        '''
+        new_bus_id = cls.num_buses
+        cls.buses[new_bus_id] = { "rides": {}, "route": [], "location": location }
+        cls.num_buses += 1
+
+        num_buses_event = NumBusesEvent(ts=0, num_buses=cls.num_buses)
+        cls.pass_events(num_buses_event)
+
+        return new_bus_id
+
+    @classmethod
     def assign_ride(cls, ride_id, origin_node, destination_node, **kwargs):
         '''
         Given a ride request, assign it to a bus according to scheduler's policy
@@ -218,16 +232,9 @@ class SchedulerCore(threading.Thread):
         nearest_bus = cls.find_nearest_bus(origin_node)
         current_ts = kwargs["time"]
         if nearest_bus is None:
-            # TODO: implement logic for no available bus
-            # print("Out of buses! Please implement solution")
-            cls.pass_events(EndScheduleEvent(kwargs['uuid']))
-            return
+            nearest_bus = cls.create_bus(origin_node)
 
         bus_node = cls.buses[nearest_bus]["location"]
-
-        #adhoc to stop crash, delete asap
-        if nearest_bus is None:
-            return
 
         if len(cls.buses[nearest_bus]["rides"]) == 0:
             # if no route planning needed

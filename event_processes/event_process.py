@@ -18,17 +18,17 @@ class EventProcess(Process):
         #self._pickup_dist = pickup_dist
         #self._dropoff_dist = dropoff_dist
         #self._timeLimit = timeLimit
-        self._rides = prob_dist.generateRides()
+        self._rides = prob_dist.generateRides(1)
 
     def run(self):
         min_hr = None
         max_hr = None
         for ride in self._rides[:len(self._rides)]:
             origin_node, destination_node, event_ts = ride
-            if min_hr is None: 
+            if min_hr is None:
                 min_hr = event_ts
                 max_hr = event_ts
-            else: 
+            else:
                 min_hr = min(min_hr, event_ts)
                 max_hr = max(max_hr, event_ts)
             event = RequestEvent(origin_node=origin_node, destination_node=destination_node, ts=event_ts) # Current ts is 6 because everything is scheduled before starting
@@ -36,7 +36,7 @@ class EventProcess(Process):
             self._comm.send(event)
         print("Generated with", min_hr, max_hr)
         i = 6
-        while i <= 10: 
+        while i <= 10:
             self._comm.send(GraphUpdateEvent(i, i))
             i += 0.5
 
