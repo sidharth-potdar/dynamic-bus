@@ -49,11 +49,11 @@ if __name__=="__main__":
         main(nb,bc)
     else: 
         MAX_CONCURRENT_SIMS = 3
-        RUNS_PER_PARAM = 30 
-        MIN_BUS_CAPACITY = 1 
+        RUNS_PER_PARAM = 15
+        MIN_BUS_CAPACITY = 4
         MAX_BUS_CAPACITY = 7
-        MIN_BUSSES = 10
-        MAX_BUSSES = 10
+        MIN_BUSSES = 100
+        MAX_BUSSES = 100
         args = []
         for _ in range(RUNS_PER_PARAM): 
             for i in range(MIN_BUSSES, MAX_BUSSES + 1, 10): 
