@@ -15,6 +15,7 @@ cp -v $this/__init__.py CX4230_EXPORT/__init__.py
 cp -v $this/main.py CX4230_EXPORT/main.py 
 cp -v $this/main.sh CX4230_EXPORT/main.sh 
 cp -v $this/README.md CX4230_EXPORT/README.md
+rm -v CX4230_EXPORT/db_logging/simlog.db 
 
 zip -r CX4230_EXPORT CX4230_EXPORT
-rm -r CX4230_EXPORT
+# rm -r CX4230_EXPORT

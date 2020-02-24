@@ -5,7 +5,7 @@
 Clone the repository. Everything required is included. 
 
 ## running 
-``` python3 main.py``` 
-It MUST be run with Python3, it is not Python2 compatible. 
+```./main.sh``` will load the python3 module and run the simulation. It will output results to db_logging/simlog.db 
+
 
 
